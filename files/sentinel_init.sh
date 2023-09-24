@@ -13,6 +13,12 @@ do
     fi
     
 done
+
+if [ -z "${MASTER}" ]; then
+    echo "ERROR: could not find a master"
+    exit 1
+fi
+
 echo "port ${SENTINEL_PORT}
 sentinel resolve-hostnames yes
 sentinel announce-hostnames yes

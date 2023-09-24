@@ -1,6 +1,6 @@
 import { Construct } from 'constructs';
 import { Chart, Lazy } from 'cdk8s';
-import { ConfigMap, Secret, StatefulSet, Volume, EnvValue, Service } from 'cdk8s-plus-27';
+import { ConfigMap, Secret, StatefulSet, Volume, EnvValue, Service, Cpu } from 'cdk8s-plus-27';
 import * as fs from 'fs';
 import { createHash } from 'crypto';
 
@@ -126,6 +126,11 @@ export class Redis extends Construct {
         name: 'config',
         image,
         command: ['sh', '-c', '/scripts/sentinel_init.sh'],
+        resources: {
+          cpu: {
+            request: Cpu.millis(500),
+          }
+        },
         envVariables: {
           'REDIS_PASSWORD': EnvValue.fromSecretValue({secret, key: 'REDIS_PASSWORD'}),
           'REDIS_NODES': EnvValue.fromConfigMap(config, 'REDIS_NODES'),
@@ -149,6 +154,11 @@ export class Redis extends Construct {
         image,
         command: ['redis-sentinel'],
         args: ['/etc/redis/sentinel.conf'],
+        resources: {
+          cpu: {
+            request: Cpu.millis(500),
+          }
+        },
         ports: [{
           name: 'sentinel',
           number: sentinelPort,
@@ -199,6 +209,11 @@ export class Redis extends Construct {
         name: 'config',
         image,
         command: ['sh', '-c', '/scripts/redis_init.sh'],
+        resources: {
+          cpu: {
+            request: Cpu.millis(500),
+          }
+        },
         envVariables: {
           'REDIS_PASSWORD': EnvValue.fromSecretValue({secret, key: 'REDIS_PASSWORD'}),
           'SENTINEL_MASTER_NAME': EnvValue.fromValue(props.sentinel.masterName),
@@ -228,6 +243,11 @@ export class Redis extends Construct {
         image,
         command: ['redis-server'],
         args: ['/etc/redis/redis.conf'],
+        resources: {
+          cpu: {
+            request: Cpu.millis(500),
+          }
+        },
         ports: [{
             number: redisPort,
             name: 'redis',

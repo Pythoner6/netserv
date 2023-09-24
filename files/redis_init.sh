@@ -20,7 +20,7 @@ if [ "$(timeout 5 redis-cli -h ${SENTINEL_SERVICE_NAME} -p ${SENTINEL_PORT} -a $
   fi
 else
   echo "sentinel found, finding master"
-  MASTER="$(redis-cli -h sentinel -p 5000 -a ${REDIS_PASSWORD} sentinel get-master-addr-by-name ${SENTINEL_MASTER_NAME} | grep -E "(^${REDIS_STATEFULSET_NAME}-*)|([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3})")"
+  MASTER="$(redis-cli -h ${SENTINEL_SERVICE_NAME} -p 5000 -a ${REDIS_PASSWORD} sentinel get-master-addr-by-name ${SENTINEL_MASTER_NAME} | grep -E "(^${REDIS_STATEFULSET_NAME}-*)|([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3})")"
   if [ "${HOSTNAME}.${REDIS_SERVICE_NAME}" == ${MASTER} ]; then
     echo "this is master, not updating config..."
   else
