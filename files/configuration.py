@@ -14,18 +14,18 @@ DATABASE = {
 }
 REDIS = {
     'tasks': {
-        'SENTINELS': [('sentinel', 5000)],
-        'SENTINEL_SERVICE': 'mymaster',
+        'SENTINELS': [(environ.get('SENTINEL_SERVICE_NAME'), int(environ.get('SENTINEL_PORT')))],
+        'SENTINEL_SERVICE': environ.get('SENTINEL_MASTER_NAME'),
         'PASSWORD': environ.get('REDIS_PASSWORD'),
         'DATABASE': 1,
         'SSL': False,
     },
     'caching': {
-        'SENTINELS': [('sentinel', 5000)],
-        'SENTINEL_SERVICE': 'mymaster',
+        'SENTINELS': [(environ.get('SENTINEL_SERVICE_NAME'), int(environ.get('SENTINEL_PORT')))],
+        'SENTINEL_SERVICE': environ.get('SENTINEL_MASTER_NAME'),
         'PASSWORD': environ.get('REDIS_PASSWORD'),
         'DATABASE': 1,
         'SSL': False,
     }
 }
-SECRET_KEY=environ.get('SECRET_KEY', '')
+SECRET_KEY=environ.get('SECRET_KEY')

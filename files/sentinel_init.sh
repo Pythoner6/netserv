@@ -13,19 +13,17 @@ do
     fi
     
 done
-#echo "sentinel monitor mymaster ${MASTER} 6379 2" >> /tmp/master
-#$(cat /tmp/master)
-echo "port 5000
+echo "port ${SENTINEL_PORT}
 sentinel resolve-hostnames yes
 sentinel announce-hostnames yes
-sentinel monitor mymaster ${MASTER} 6379 2
-sentinel down-after-milliseconds mymaster 1000
-sentinel failover-timeout mymaster 10000
-sentinel parallel-syncs mymaster 1
+sentinel monitor ${SENTINEL_MASTER_NAME} ${MASTER} 6379 2
+sentinel down-after-milliseconds ${SENTINEL_MASTER_NAME} 1000
+sentinel failover-timeout ${SENTINEL_MASTER_NAME} 10000
+sentinel parallel-syncs ${SENTINEL_MASTER_NAME} 1
 #sentinel sentinel-pass ${REDIS_PASSWORD}
-sentinel auth-pass mymaster ${REDIS_PASSWORD}
+sentinel auth-pass ${SENTINEL_MASTER_NAME} ${REDIS_PASSWORD}
 #requirepass ${REDIS_PASSWORD}
-sentinel announce-ip ${HOSTNAME}.sentinel
-sentinel announce-port 5000
+sentinel announce-ip ${HOSTNAME}.${SENTINEL_SERVICE_NAME}
+sentinel announce-port ${SENTINEL_PORT}
 " > /etc/redis/sentinel.conf
 cat /etc/redis/sentinel.conf
