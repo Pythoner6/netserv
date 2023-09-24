@@ -1,7 +1,7 @@
 import { Construct } from 'constructs';
-import { App, Chart } from 'cdk8s';
+import { App, Chart, Cron } from 'cdk8s';
 import * as pg from './imports/postgresql.cnpg.io';
-import { Namespace, ConfigMap, Secret, Volume, EnvValue, Deployment, Cpu } from 'cdk8s-plus-27';
+import { Namespace, ConfigMap, Secret, Volume, EnvValue, Deployment, Cpu, CronJob } from 'cdk8s-plus-27';
 import * as fs from 'fs';
 import { createHash } from 'crypto';
 import { Redis } from './redis';
@@ -162,6 +162,45 @@ export class Netbox extends Chart {
           }
         ],
       }],
+    });
+
+    new CronJob(this, 'netbox-housekeeping', {
+      schedule: Cron.daily(),
+      securityContext: {
+        ensureNonRoot: false,
+      },
+      podMetadata: {
+        annotations: {
+          'configmap.hash': createHash('sha256').update(config.data['configuration.py']).digest('base64'),
+        },
+      },
+      containers: [{
+        name: 'netbox',
+        image: 'netboxcommunity/netbox:v3.6',
+        securityContext: {
+          ensureNonRoot: false,
+        },
+        command: ['/opt/netbox/venv/bin/python', '/opt/netbox/netbox/manage.py', 'housekeeping'],
+        resources: {
+          cpu: {
+            request: Cpu.millis(500),
+          }
+        },
+        envVariables: {
+          'SENTINEL_MASTER_NAME': EnvValue.fromValue(sentinelMasterName),
+          'SENTINEL_SERVICE_NAME': EnvValue.fromValue(redis.sentinelHostname),
+          'SENTINEL_PORT': EnvValue.fromValue(redis.sentinelPort.toString()),
+          'REDIS_PASSWORD': EnvValue.fromSecretValue({secret: redisSecret, key: 'REDIS_PASSWORD'}),
+          'PGPASS': EnvValue.fromSecretValue({secret: postgresSecret, key: 'pgpass'}),
+          'SECRET_KEY': EnvValue.fromSecretValue({secret: netboxSecret, key: 'SECRET_KEY'}),
+        },
+        volumeMounts: [
+          {
+            path: '/etc/netbox/config',
+            volume: configVolume,
+          },
+        ],
+      }]
     });
   }
 }
