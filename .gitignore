@@ -1,6 +1,7 @@
 *.d.ts
 *.js
 !jest.config.js
-node_modules
+node_modules/
 dist/
+dist-deps/
 imports/

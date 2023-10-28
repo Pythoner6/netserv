@@ -1,5 +1,9 @@
 language: typescript
-app: cdk8s import k8s@1.27.0 && npx ts-node deps.ts && cdk8s import dist/cloudnative-pg.k8s.yaml && npx ts-node main.ts
+app: npx ts-node main.ts
 imports:
   - k8s@1.27.0
-  - dist/cloudnative-pg.k8s.yaml
+  - dist-deps/tidb.k8s.yaml
+  - dist-deps/rook.k8s.yaml
+  - dist-deps/metallb.k8s.yaml
+  - dist-deps/external-secrets.k8s.yaml
+  - dist-deps/traefik.k8s.yaml

@@ -6,8 +6,11 @@
   "license": "Apache-2.0",
   "private": true,
   "scripts": {
+    "import-k8s": "cdk8s import k8s@1.27.0",
+    "synth-deps": "cdk8s synth --app 'npx ts-node deps.ts' --output dist-deps",
     "import": "cdk8s import",
     "synth": "cdk8s synth",
+    "full-synth": "npm run import-k8s && npm run synth-deps && npm run import && npm run synth",
     "upgrade": "npm i cdk8s@latest cdk8s-cli@latest",
     "upgrade:next": "npm i cdk8s@next cdk8s-cli@next"
   },
