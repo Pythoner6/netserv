@@ -1,14 +1,16 @@
 import { Construct } from 'constructs';
-import { App, Chart, /*Helm,*/ ApiObject, /*Lazy*/ } from 'cdk8s';
-import { /*Namespace,*/ ServiceType, Service, Pods, /*ServiceAccount, Role, RoleBinding, Secret*/ } from 'cdk8s-plus-27';
+import { App, Chart, Helm, ApiObject, Lazy } from 'cdk8s';
+import { Namespace, ServiceType, Service, Pods, /*ServiceAccount, Role, RoleBinding,*/ Secret } from 'cdk8s-plus-27';
 //import { TidbCluster, TidbClusterSpecPdRequests, TidbClusterSpecTikvRequests, TidbInitializer } from './imports/pingcap.com';
 import { CephCluster, CephFilesystem, CephObjectStore } from '@pythoner6/netserv-deps/imports/ceph.rook.io';
 import { IpAddressPool, L2Advertisement } from '@pythoner6/netserv-deps/imports/metallb.io';
 import { KubeStorageClass } from './imports/k8s';
 //import { ClusterSecretStoreV1Beta1, ClusterExternalSecret, ExternalSecretV1Beta1, ClusterSecretStoreV1Beta1SpecProviderKubernetesServerCaProviderType } from '@pythoner6/netserv-deps/imports/external-secrets.io';
+import { ExternalSecretV1Beta1, } from '@pythoner6/netserv-deps/imports/external-secrets.io';
 import { Password } from '@pythoner6/netserv-deps/imports/generators.external-secrets.io';
 import { IngressRoute, IngressRouteSpecRoutesKind, IngressRouteSpecRoutesServicesKind, IngressRouteSpecRoutesServicesPort, Middleware } from '@pythoner6/netserv-deps/imports/traefik.io';
 import { CrdbCluster, CrdbClusterSpecDataStorePvcSpecResourcesRequests } from '@pythoner6/netserv-deps/imports/crdb.cockroachlabs.com';
+import * as process from 'process';
 
 function namespace(obj: Construct): string {
   return (ApiObject.isApiObject(obj) ? (obj as ApiObject).metadata.namespace : undefined) 
@@ -16,8 +18,16 @@ function namespace(obj: Construct): string {
       ?? 'default';
 }
 
+export interface CockroachService {
+  readonly hostname: string;
+  readonly sqlPort: number;
+  readonly httpPort: number;
+  readonly grpcPort: number;
+};
+
 export class Shared extends Chart {
   public readonly passwordGen: Password;
+  public readonly cockroachService: CockroachService;
 
   constructor(scope: Construct, id: string) {
     super(scope, id, {
@@ -36,12 +46,19 @@ export class Shared extends Chart {
       },
     });
 
-    new CrdbCluster(this, 'cockroach', {
+    const sqlPort = 26257;
+    const grpcPort = 26258;
+    const httpPort = 8080;
+
+    const crdb = new CrdbCluster(this, 'cockroach', {
       metadata: {},
       spec: {
         cockroachDbVersion: 'v23.1.11',
         nodes: 3,
         minAvailable: 2,
+        sqlPort,
+        grpcPort,
+        httpPort,
         affinity: {
           nodeAffinity: {
             requiredDuringSchedulingIgnoredDuringExecution: {
@@ -68,6 +85,11 @@ export class Shared extends Chart {
         },
       },
     });
+
+    this.cockroachService = {
+      hostname: `${crdb.name}.${namespace(crdb)}.svc.cluster.local`,
+      sqlPort, grpcPort, httpPort,
+    };
   }
 }
 
@@ -277,7 +299,6 @@ export class Ceph extends Chart {
   }
 }
 
-/*
 interface GiteaProps {
   readonly giteaStorageClass: string;
   readonly shared: Shared;
@@ -301,6 +322,7 @@ export class Gitea extends Chart {
     const databaseName = 'gitea';
     const databaseUser = 'gitea';
 
+    /*
     const extSecretsServiceAcc = new ServiceAccount(this, 'ext-secrets-acc');
     const extSecretsRole = new Role(this, 'ext-secrets-role', {
       metadata: {
@@ -395,6 +417,7 @@ export class Gitea extends Chart {
         },
       },
     });
+    */
 
     const passwordGen = new Password(this, 'password', {
       metadata: {
@@ -432,7 +455,7 @@ export class Gitea extends Chart {
     });
 
     new Helm(this, 'gitea', {
-      chart: 'gitea/gitea',
+      chart: process.env.npm_config_gitea!,
       namespace: this.namespace,
       helmFlags: ['--skip-tests'],
       values: {
@@ -458,14 +481,17 @@ export class Gitea extends Chart {
           },
           additionalConfigFromEnvs: [{
             name: 'GITEA__DATABASE__PASSWD',
-            ...Secret.fromSecretName(this, 'copied-secret', secret.name).envValue('GITEA__DATABASE__PASSWD'),
+            //...Secret.fromSecretName(this, 'copied-secret', secret.name).envValue('GITEA__DATABASE__PASSWD'),
+            ...Secret.fromSecretName(this, 'giteadbpassword', 'gitea-db-password').envValue('GITEA__DATABASE__PASSWD'),
           }],
           config: {
             database: {
-              DB_TYPE: 'mysql',
-              HOST: props.shared.tidb.url,
+              DB_TYPE: 'postgres',
+              COCKROACH: true,
+              HOST: `${props.shared.cockroachService.hostname}:${props.shared.cockroachService.sqlPort}`,
               NAME: databaseName,
               USER: databaseUser,
+              SSL_MODE: 'require',
             },
             session: {
               PROVIDER: 'memory',
@@ -482,7 +508,6 @@ export class Gitea extends Chart {
     });
   }
 }
-*/
 
 export class MetalLBConf extends Chart {
   constructor(scope: Construct, id: string) {
@@ -507,13 +532,11 @@ export class MetalLBConf extends Chart {
 }
 
 const app = new App();
-/*const shared =*/ new Shared(app, 'shared');
-/*const ceph =*/ new Ceph(app, 'ceph');
-/*
+const shared = new Shared(app, 'shared');
+const ceph = new Ceph(app, 'ceph');
 new Gitea(app, 'gitea', {
   giteaStorageClass: ceph.cephfsStorageClassName,
   shared,
 });
-*/
 new MetalLBConf(app, 'metallb-conf');
 app.synth();

@@ -54,6 +54,24 @@
           cp -r install/. $out/
         '';
       };
+      gitea-chart = pkgs.fetchzip {
+        url = "https://dl.gitea.com/charts/gitea-9.5.1.tgz";
+        hash = "sha256-UYslC1WgnMP/Qk3wCVU/lBGl/QyBsBX+8zU40eyJUOo=";
+      };
+      #patch-gitea = pkgs.gitea.overrideAttrs (old: rec {
+      #  patches = old.patches ++ [ ./patches/gitea-cockroach.patch ];
+      #  version = "1.20.5";
+      #  src = pkgs.fetchurl {
+      #    url = "https://dl.gitea.com/gitea/${version}/gitea-src-${version}.tar.gz";
+      #    hash = "sha256-cH/AHsFXOdvfSfj9AZUd3l/RlYE06o1ByZu0vvGQuXw=";
+      #  };
+      #  buildPhase = old.buildPhase + ''
+      #    go build contrib/environment-to-ini/environment-to-ini.go
+      #  '';
+      #  postInstall = old.postInstall + ''
+      #    cp ./environment-to-ini $out/bin/environment-to-ini
+      #  '';
+      #});
     in rec {
       packages.x86_64-linux.deps = pkgs.buildNpmPackage rec {
         name = "netserv-deps";
@@ -61,7 +79,7 @@
         src = ./deps;
         npmDepsHash = "sha256-HSBAyeJNT6HFvRtsEGFyWX+hDmgbJ2+4k9J9CXe9bAw=";
         nativeBuildInputs = with pkgs; [ yq-go kubernetes-helm nodejs nodePackages.npm typescript ];
-	makeCacheWritable = true;
+        makeCacheWritable = true;
         npmBuildFlags = [
           "--metallb=${metallb-chart}" 
           "--traefik=${traefik-chart}" 
@@ -70,12 +88,12 @@
           "--local-path-provisioner=${local-path-provisioner-chart}" 
           "--cockroachdb=${cockroachdb-manifest}"
         ];
-	postBuild = ''
-	  npm pack
-	'';
-	installPhase = ''
-	  cp pythoner6-netserv-deps-0.0.0.tgz $out
-	'';
+        postBuild = ''
+          npm pack
+        '';
+        installPhase = ''
+          cp pythoner6-netserv-deps-0.0.0.tgz $out
+        '';
       };
       packages.x86_64-linux.default = pkgs.buildNpmPackage rec {
         name = "netserv-main";
@@ -83,16 +101,19 @@
         src = ./main;
         npmDepsHash = "sha256-sWj3KBuxqq1StZ4XuQscpe3zy33YT8VLFKasq1zWyOU=";
         nativeBuildInputs = with pkgs; [ yq-go kubernetes-helm nodejs nodePackages.npm typescript ];
-	makeCacheWritable = true;
-	preBuild = ''
-	  ln -s ${packages.x86_64-linux.deps} deps.tgz
-	  npm i deps.tgz
-	'';
-	installPhase = ''
-	  mkdir -p $out/deps
-	  cp -a dist/. $out
-	  cp -a node_modules/@pythoner6/netserv-deps/dist/. $out/deps
-	'';
+        makeCacheWritable = true;
+        npmBuildFlags = [
+          "--gitea=${gitea-chart}"
+        ];
+        preBuild = ''
+          ln -s ${packages.x86_64-linux.deps} deps.tgz
+          npm i deps.tgz
+        '';
+        installPhase = ''
+          mkdir -p $out/deps
+          cp -a dist/. $out
+          cp -a node_modules/@pythoner6/netserv-deps/dist/. $out/deps
+        '';
       };
       devShells.x86_64-linux.default = pkgs.mkShell {
         buildInputs = with pkgs; [ postgresql jq nodejs nodePackages.npm typescript kubernetes-helm ];
