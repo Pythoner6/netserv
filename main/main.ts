@@ -473,7 +473,19 @@ export class Gitea extends Chart {
           http: {
             port: 8080,
             type: 'LoadBalancer',
+            externalIPs: ['10.16.2.12'],
           },
+          ssh: {
+            port: 22,
+            type: 'LoadBalancer',
+            clusterIP: undefined,
+            externalIPs: ['10.16.2.12'],
+          },
+        },
+        image: {
+          registry: "ghcr.io",
+          repository: "pythoner6/gitea",
+          tag: "v1.20.5",
         },
         gitea: {
           admin: {
@@ -485,6 +497,10 @@ export class Gitea extends Chart {
             ...Secret.fromSecretName(this, 'giteadbpassword', 'gitea-db-password').envValue('GITEA__DATABASE__PASSWD'),
           }],
           config: {
+            server: {
+              DOMAIN: 'gitea.home.josephmartin.org',
+              SSH_DOMAIN: 'gitea.home.josephmartin.org',
+            },
             database: {
               DB_TYPE: 'postgres',
               COCKROACH: true,
