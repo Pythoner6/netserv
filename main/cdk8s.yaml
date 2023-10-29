@@ -1,7 +1,6 @@
 language: typescript
-app: npx ts-node main.ts
+app: node main.js
 imports:
-  - k8s@1.27.0
   - dist-deps/tidb.k8s.yaml
   - dist-deps/rook.k8s.yaml
   - dist-deps/metallb.k8s.yaml

@@ -1,21 +1,14 @@
 import { Construct } from 'constructs';
-import { App, Chart, Helm, ApiObject, Lazy } from 'cdk8s';
-import { Namespace, ServiceType, Service, Pods, ServiceAccount, Role, RoleBinding, Secret } from 'cdk8s-plus-27';
-import { TidbCluster, TidbClusterSpecPdRequests, TidbClusterSpecTikvRequests, TidbInitializer } from './imports/pingcap.com';
-import { CephCluster, CephFilesystem } from './imports/ceph.rook.io';
-import { IpAddressPool, L2Advertisement } from './imports/metallb.io';
+import { App, Chart, /*Helm,*/ ApiObject, /*Lazy*/ } from 'cdk8s';
+import { /*Namespace,*/ ServiceType, Service, Pods, /*ServiceAccount, Role, RoleBinding, Secret*/ } from 'cdk8s-plus-27';
+//import { TidbCluster, TidbClusterSpecPdRequests, TidbClusterSpecTikvRequests, TidbInitializer } from './imports/pingcap.com';
+import { CephCluster, CephFilesystem, CephObjectStore } from '@pythoner6/netserv-deps/imports/ceph.rook.io';
+import { IpAddressPool, L2Advertisement } from '@pythoner6/netserv-deps/imports/metallb.io';
 import { KubeStorageClass } from './imports/k8s';
-import { ClusterSecretStoreV1Beta1, ClusterExternalSecret, ExternalSecretV1Beta1, ClusterSecretStoreV1Beta1SpecProviderKubernetesServerCaProviderType } from './imports/external-secrets.io';
-import { Password } from './imports/generators.external-secrets.io';
-import { IngressRoute, IngressRouteSpecRoutesKind, IngressRouteSpecRoutesServicesKind, IngressRouteSpecRoutesServicesPort, Middleware } from './imports/traefik.io';
-
-export interface ITidb {
-  namespace: string;
-  name: string;
-  host: string;
-  port: number;
-  url: string;
-}
+//import { ClusterSecretStoreV1Beta1, ClusterExternalSecret, ExternalSecretV1Beta1, ClusterSecretStoreV1Beta1SpecProviderKubernetesServerCaProviderType } from '@pythoner6/netserv-deps/imports/external-secrets.io';
+import { Password } from '@pythoner6/netserv-deps/imports/generators.external-secrets.io';
+import { IngressRoute, IngressRouteSpecRoutesKind, IngressRouteSpecRoutesServicesKind, IngressRouteSpecRoutesServicesPort, Middleware } from '@pythoner6/netserv-deps/imports/traefik.io';
+import { CrdbCluster, CrdbClusterSpecDataStorePvcSpecResourcesRequests } from '@pythoner6/netserv-deps/imports/crdb.cockroachlabs.com';
 
 function namespace(obj: Construct): string {
   return (ApiObject.isApiObject(obj) ? (obj as ApiObject).metadata.namespace : undefined) 
@@ -25,22 +18,12 @@ function namespace(obj: Construct): string {
 
 export class Shared extends Chart {
   public readonly passwordGen: Password;
-  private readonly _tidb: TidbCluster;
-  public get tidb(): ITidb {
-    const host = `${this._tidb.name}-tidb.${namespace(this)}.svc.cluster.local`;
-    // TODO
-    const port = 4000;
-    return {
-      namespace: namespace(this._tidb),
-      name: this._tidb.name,
-      host,
-      port,
-      url: `${host}:${port}`
-    };
-  }
 
   constructor(scope: Construct, id: string) {
     super(scope, id, {
+      labels: {
+        'prune-id': id,
+      },
     });
 
     this.passwordGen = new Password(this, 'password', {
@@ -53,61 +36,38 @@ export class Shared extends Chart {
       },
     });
 
-    this._tidb = new TidbCluster(this, 'tidb', {
-      metadata: {
-      },
-      spec: {
-        pvReclaimPolicy: 'Retain',
-        timezone: 'UTC',
-        enableDynamicConfiguration: true,
-        discovery: {},
-        helper: {
-          image: 'alpine:3.18.3',
-        },
-        pd: {
-          baseImage: 'pingcap/pd:v7.1.1',
-          replicas: 3,
-          maxFailoverCount: 0,
-          storageClassName: 'local-path',
-          requests: {
-            storage: TidbClusterSpecPdRequests.fromString('10Gi'),
-          },
-          config: {},
-        },
-        tikv: {
-          baseImage: 'pingcap/tikv:v7.1.1',
-          replicas: 3,
-          maxFailoverCount: 0,
-          storageClassName: 'local-path',
-          requests: {
-            storage: TidbClusterSpecTikvRequests.fromString('10Gi'),
-          },
-          config: {},
-        },
-        tidb: {
-          baseImage: 'pingcap/tidb:v7.1.1',
-          replicas: 2,
-          service: {
-            type: 'ClusterIP',
-          },
-          config: {},
-        },
-      }
-    });
-
-    /*
-    new TidbDashboard(this, 'tidb-dashboard', {
+    new CrdbCluster(this, 'cockroach', {
       metadata: {},
       spec: {
-        baseImage: 'pingcap/tidb-dashboard:v7.1.1',
-        clusters: [{name: tidb.name }],
-        storageClassName: 'local-path',
-        requests: {
-          storage: TidbDashboardSpecRequests.fromString('10Gi'),
+        cockroachDbVersion: 'v23.1.11',
+        nodes: 3,
+        minAvailable: 2,
+        affinity: {
+          nodeAffinity: {
+            requiredDuringSchedulingIgnoredDuringExecution: {
+              nodeSelectorTerms: [{
+                matchExpressions: [{
+                  key: 'ceph',
+                  operator: 'In',
+                  values: ['yes'],
+                }],
+              }],
+            },
+          },
+        },
+        tlsEnabled: true,
+        dataStore: {
+          pvc: {
+            spec: {
+              accessModes: [ 'ReadWriteOnce' ],
+              resources: { requests: { storage: CrdbClusterSpecDataStorePvcSpecResourcesRequests.fromString('50Gi') } },
+              storageClassName: 'local-path',
+              volumeMode: 'Filesystem',
+            }
+          },
         },
       },
     });
-    */
   }
 }
 
@@ -195,6 +155,25 @@ export class Ceph extends Chart {
         },
         disruptionManagement: {
           managePodBudgets: true,
+        },
+      },
+    });
+
+    new CephObjectStore(this, 's3', {
+      metadata: {},
+      spec: {
+        metadataPool: {
+          failureDomain: 'host',
+          replicated: {size: 3},
+        },
+        dataPool: {
+          failureDomain: 'host',
+          replicated: {size: 3},
+        },
+        preservePoolsOnDelete: false,
+        gateway: {
+          port: 80,
+          instances: 1,
         },
       },
     });
@@ -298,6 +277,7 @@ export class Ceph extends Chart {
   }
 }
 
+/*
 interface GiteaProps {
   readonly giteaStorageClass: string;
   readonly shared: Shared;
@@ -416,24 +396,6 @@ export class Gitea extends Chart {
       },
     });
 
-    new TidbInitializer(this, 'gitea-db', {
-      metadata: {
-        namespace: props.shared.tidb.namespace,
-      },
-      spec: {
-        image: 'ghcr.io/pythoner6/mysqlclient:v1',
-        cluster: {
-          namespace: props.shared.tidb.namespace,
-          name: props.shared.tidb.name,
-        },
-        initSql: `
-          CREATE DATABASE IF NOT EXISTS gitea;
-          GRANT ALL PRIVILEGES ON ${databaseName}.* TO '${databaseUser}'@'%';
-        `,
-        passwordSecret: secret.name,
-      },
-    });
-
     const passwordGen = new Password(this, 'password', {
       metadata: {
       },
@@ -520,6 +482,7 @@ export class Gitea extends Chart {
     });
   }
 }
+*/
 
 export class MetalLBConf extends Chart {
   constructor(scope: Construct, id: string) {
@@ -544,11 +507,13 @@ export class MetalLBConf extends Chart {
 }
 
 const app = new App();
-const shared = new Shared(app, 'shared');
-const ceph = new Ceph(app, 'ceph');
+/*const shared =*/ new Shared(app, 'shared');
+/*const ceph =*/ new Ceph(app, 'ceph');
+/*
 new Gitea(app, 'gitea', {
   giteaStorageClass: ceph.cephfsStorageClassName,
   shared,
 });
+*/
 new MetalLBConf(app, 'metallb-conf');
 app.synth();

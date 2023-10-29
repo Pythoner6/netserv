@@ -1,6 +1,7 @@
 import { Construct } from 'constructs';
 import { App, Chart, Helm, Include } from 'cdk8s';
 import { Namespace } from 'cdk8s-plus-27';
+import * as process from 'process';
 
 const kubeVersion = '1.27.3'
 
@@ -14,7 +15,7 @@ export class LocalPathProvisioner extends Chart {
     });
 
     new Helm(this, 'chart', {
-      chart: 'submodules/local-path-provisioner/deploy/chart/local-path-provisioner/',
+      chart: process.env.npm_config_local_path_provisioner!,
       namespace: this.namespace,
       helmFlags: ['--kube-version', kubeVersion, '--include-crds'],
       values: {
@@ -28,33 +29,6 @@ export class LocalPathProvisioner extends Chart {
           reclaimPolicy: 'Retain',
         }
       },
-    });
-  }
-}
-
-export class TiDB extends Chart {
-  constructor(scope: Construct, id: string) {
-    super(scope, id, {
-      namespace: 'tidb-admin',
-      labels: {
-        'prune-id': id,
-      },
-    });
-
-    new Namespace(this, 'namespace', {
-      metadata: {
-        name: this.namespace,
-      },
-    });
-
-    new Helm(this, 'chart', {
-      chart: 'submodules/tidb-operator/charts/tidb-operator',
-      namespace: this.namespace,
-      helmFlags: ['--kube-version', kubeVersion, '--include-crds'],
-    });
-
-    new Include(this, 'crds', {
-      url: 'submodules/tidb-operator/manifests/crd.yaml'
     });
   }
 }
@@ -80,7 +54,7 @@ export class Rook extends Chart {
     });
 
     new Helm(this, 'operator-helm-chart', {
-      chart: 'rook-release/rook-ceph',
+      chart: process.env.npm_config_rook!,
       namespace: this.namespace,
       helmFlags: ['--kube-version', kubeVersion, '--include-crds'],
     });
@@ -104,7 +78,7 @@ export class Traefik extends Chart {
     });
 
     new Helm(this, 'chart', {
-      chart: 'traefik/traefik',
+      chart: process.env.npm_config_traefik!,
       namespace: this.namespace,
       values: {
         ingressRoute: {
@@ -140,7 +114,7 @@ export class MetalLB extends Chart {
     });
 
     new Helm(this, 'chart', {
-      chart: 'metallb/metallb',
+      chart: process.env.npm_config_metallb!,
       namespace: this.namespace,
       helmFlags: ['--kube-version', kubeVersion, '--include-crds'],
     });
@@ -163,18 +137,37 @@ export class ExternalSecrets extends Chart {
     });
 
     new Helm(this, 'chart', {
-      chart: 'external-secrets/external-secrets',
+      chart: process.env.npm_config_external_secrets!,
       namespace: this.namespace,
       helmFlags: ['--include-crds'],
     });
   }
 }
 
+export class CockroachDb extends Chart {
+  constructor(scope: Construct, id: string) {
+    super(scope, id, {
+      //namespace: 'cockroach-operator-system',
+      labels: {
+        'prune-id': id,
+      }
+    });
+
+    new Include(this, 'crds', {
+      url: `${process.env.npm_config_cockroachdb}/crds.yaml`,
+    });
+
+    new Include(this, 'operator', {
+      url: `${process.env.npm_config_cockroachdb}/operator.yaml`,
+    });
+  }
+}
+
 const app = new App();
 new LocalPathProvisioner(app, 'local-path-provisioner');
-new TiDB(app, 'tidb');
 new Rook(app, 'rook');
 new Traefik(app, 'traefik');
 new MetalLB(app, 'metallb');
 new ExternalSecrets(app, 'external-secrets');
+new CockroachDb(app, 'cockroachdb');
 app.synth();

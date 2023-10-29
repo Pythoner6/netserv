@@ -1,7 +1,6 @@
 {
   "compilerOptions": {
     "alwaysStrict": true,
-    "charset": "utf8",
     "declaration": true,
     "experimentalDecorators": true,
     "inlineSourceMap": true,
@@ -29,6 +28,7 @@
     "**/*.ts"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "imports/**/*.ts"
   ]
 }

@@ -1,9 +1,0 @@
-[submodule "local-path-provisioner"]
-	path = submodules/local-path-provisioner
-	url = https://github.com/rancher/local-path-provisioner
-[submodule "redis-operator"]
-	path = redis-operator
-	url = https://github.com/spotahome/redis-operator
-[submodule "submodules/tidb-operator"]
-	path = submodules/tidb-operator
-	url = https://github.com/pingcap/tidb-operator
