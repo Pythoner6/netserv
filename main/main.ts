@@ -8,7 +8,7 @@ import { KubeStorageClass } from './imports/k8s';
 //import { ClusterSecretStoreV1Beta1, ClusterExternalSecret, ExternalSecretV1Beta1, ClusterSecretStoreV1Beta1SpecProviderKubernetesServerCaProviderType } from '@pythoner6/netserv-deps/imports/external-secrets.io';
 import { ExternalSecretV1Beta1, } from '@pythoner6/netserv-deps/imports/external-secrets.io';
 import { Password } from '@pythoner6/netserv-deps/imports/generators.external-secrets.io';
-import { IngressRoute, IngressRouteSpecRoutesKind, IngressRouteSpecRoutesServicesKind, IngressRouteSpecRoutesServicesPort, Middleware } from '@pythoner6/netserv-deps/imports/traefik.io';
+import { IngressRoute, IngressRouteSpecRoutesKind, IngressRouteSpecRoutesServicesKind, IngressRouteSpecRoutesServicesPort } from '@pythoner6/netserv-deps/imports/traefik.io';
 import { CrdbCluster, CrdbClusterSpecDataStorePvcSpecResourcesRequests } from '@pythoner6/netserv-deps/imports/crdb.cockroachlabs.com';
 import { ClusterIssuer, Certificate } from '@pythoner6/netserv-deps/imports/cert-manager.io';
 import * as process from 'process';
@@ -113,13 +113,17 @@ export class Shared extends Chart {
   }
 }
 
+export interface CephProps {
+  shared: Shared;
+}
+
 export class Ceph extends Chart {
   private readonly cephfsStorageClass: KubeStorageClass;
   public get cephfsStorageClassName(): string {
     return this.cephfsStorageClass.name;
   }
 
-  constructor(scope: Construct, id: string) {
+  constructor(scope: Construct, id: string, props: CephProps) {
     super(scope, id, {
       namespace: 'rook-admin',
       labels: {
@@ -127,7 +131,7 @@ export class Ceph extends Chart {
       },
     });
 
-    const dashboardPrefix = '/ceph';
+    const dashboardPrefix = '/';
     const dashboardPort = 8443;
 
     new CephCluster(this, 'ceph-cluster', {
@@ -275,21 +279,18 @@ export class Ceph extends Chart {
       }),
     });
 
-    const ingressSvcs = [{
-      kind: IngressRouteSpecRoutesServicesKind.SERVICE,
-      name: /*'rook-ceph-mgr-dashboard'*/ dashboardService.name,
-      namespace: namespace(this),
-      port: IngressRouteSpecRoutesServicesPort.fromNumber(dashboardPort),
-      scheme: 'https',
-    }];
 
-    const dashboardMiddleware = new Middleware(this, 'dashboard-fixpath', {
+    const cert: Certificate = new Certificate(this, 'cert', {
       metadata: {},
       spec: {
-        redirectRegex: {
-          regex: `^(.*)${dashboardPrefix}$`,
-          replacement: `\${1}${dashboardPrefix}/`,
+        secretName: Lazy.any({produce: () => cert.name}),
+        issuerRef: {
+          name: props.shared.issuer.name,
+          kind: props.shared.issuer.kind,
+          group: props.shared.issuer.apiGroup,
         },
+        commonName: 'ceph.home.josephmartin.org',
+        dnsNames: ['ceph.home.josephmartin.org'],
       },
     });
 
@@ -297,23 +298,21 @@ export class Ceph extends Chart {
       metadata: {},
       spec: {
         entryPoints: ['websecure'],
-        routes: [
-          {
-            kind: IngressRouteSpecRoutesKind.RULE,
-            match: `Path(\`${dashboardPrefix}\`)`,
-            priority: 10,
-            middlewares: [{
-              name: dashboardMiddleware.name,
-            }],
-            services: [{name: 'noop@internal', kind: IngressRouteSpecRoutesServicesKind.TRAEFIK_SERVICE }],
-          },
-          {
-            kind: IngressRouteSpecRoutesKind.RULE,
-            match: `PathPrefix(\`${dashboardPrefix}/\`)`,
-            priority: 10,
-            services: ingressSvcs,
-          }
-        ],
+        tls: {
+          secretName: cert.name,
+        },
+        routes: [{
+          kind: IngressRouteSpecRoutesKind.RULE,
+          match: `Host(\`ceph.home.josephmartin.org\`)`,
+          priority: 10,
+          services: [{
+            kind: IngressRouteSpecRoutesServicesKind.SERVICE,
+            name: /*'rook-ceph-mgr-dashboard'*/ dashboardService.name,
+            namespace: namespace(this),
+            port: IngressRouteSpecRoutesServicesPort.fromNumber(dashboardPort),
+            scheme: 'https',
+          }],
+        }],
       },
     });
   }
@@ -611,7 +610,7 @@ export class MetalLBConf extends Chart {
 
 const app = new App();
 const shared = new Shared(app, 'shared');
-const ceph = new Ceph(app, 'ceph');
+const ceph = new Ceph(app, 'ceph', {shared});
 new Gitea(app, 'gitea', {
   giteaStorageClass: ceph.cephfsStorageClassName,
   shared,
