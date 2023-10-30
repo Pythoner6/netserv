@@ -454,13 +454,18 @@ export class Gitea extends Chart {
       },
     });
 
-    new Helm(this, 'gitea', {
+    const helm = new Helm(this, 'gitea', {
       chart: process.env.npm_config_gitea!,
       namespace: this.namespace,
       helmFlags: ['--skip-tests'],
       values: {
+        replicaCount: 2,
         'redis-cluster': {
-          enabled: false,
+          enabled: true,
+          usePassword: false,
+          persistence: {
+            storageClass: 'local-path',
+          },
         },
         postgresql: { enabled: false },
         'postgresql-ha': { enabled: false },
@@ -472,13 +477,12 @@ export class Gitea extends Chart {
         service: {
           http: {
             port: 8080,
-            type: 'LoadBalancer',
-            externalIPs: ['10.16.2.12'],
+            type: 'ClusterIP',
+            clusterIP: undefined,
           },
           ssh: {
             port: 22,
             type: 'LoadBalancer',
-            clusterIP: undefined,
             externalIPs: ['10.16.2.12'],
           },
         },
@@ -510,16 +514,37 @@ export class Gitea extends Chart {
               SSL_MODE: 'require',
             },
             session: {
-              PROVIDER: 'memory',
+              PROVIDER: 'redis',
             },
             cache: {
-              ADAPTER: 'memory',
+              ADAPTER: 'redis',
             },
             queue: {
-              TYPE: 'level',
+              TYPE: 'redis',
+            },
+            'cron.GIT_GC_REPOS': {
+              ENABLED: false,
             },
           }
         }
+      },
+    });
+
+    new IngressRoute(this, 'ingress', {
+      metadata: {},
+      spec: {
+        entryPoints: ['websecure'],
+        routes: [
+          {
+            kind: IngressRouteSpecRoutesKind.RULE,
+            match: `Host(\`gitea.home.josephmartin.org\`)`,
+            priority: 10,
+            services: [{
+              name: `${helm.releaseName}-http`,
+              port: IngressRouteSpecRoutesServicesPort.fromNumber(8080),
+            }],
+          },
+        ],
       },
     });
   }
