@@ -535,6 +535,8 @@ export class Gitea extends Chart {
           }],
           config: {
             server: {
+              PROTOCOL: 'http',
+              ROOT_URL: 'https://gitea.home.josephmartin.org',
               DOMAIN: 'gitea.home.josephmartin.org',
               SSH_DOMAIN: 'gitea.home.josephmartin.org',
             },
