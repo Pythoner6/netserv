@@ -13,6 +13,10 @@
         url = "https://github.com/metallb/metallb/releases/download/metallb-chart-0.13.12/metallb-0.13.12.tgz";
         hash = "sha256-W+GcNyNLEH5fV00436PO8RTXDdWn1BttE/Y3JbaN41A=";
       };
+      cert-manager-chart = pkgs.fetchzip {
+        url = "https://charts.jetstack.io/charts/cert-manager-v1.13.1.tgz";
+        hash = "sha256-wAHlpNAc0bXW4vL7ctK80RhkgY4iLCUIKFSqNPSTfRQ=";
+      };
       traefik-chart = pkgs.fetchzip {
         url = "https://traefik.github.io/charts/traefik/traefik-25.0.0.tgz";
         hash = "sha256-ua8KnUB6MxY7APqrrzaKKSOLwSjDYkk9tfVkb1bqkVM=";
@@ -87,6 +91,7 @@
           "--external-secrets=${external-secrets-chart}" 
           "--local-path-provisioner=${local-path-provisioner-chart}" 
           "--cockroachdb=${cockroachdb-manifest}"
+          "--certmanager=${cert-manager-chart}"
         ];
         postBuild = ''
           npm pack

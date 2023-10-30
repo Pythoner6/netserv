@@ -10,6 +10,7 @@ import { ExternalSecretV1Beta1, } from '@pythoner6/netserv-deps/imports/external
 import { Password } from '@pythoner6/netserv-deps/imports/generators.external-secrets.io';
 import { IngressRoute, IngressRouteSpecRoutesKind, IngressRouteSpecRoutesServicesKind, IngressRouteSpecRoutesServicesPort, Middleware } from '@pythoner6/netserv-deps/imports/traefik.io';
 import { CrdbCluster, CrdbClusterSpecDataStorePvcSpecResourcesRequests } from '@pythoner6/netserv-deps/imports/crdb.cockroachlabs.com';
+import { ClusterIssuer, Certificate } from '@pythoner6/netserv-deps/imports/cert-manager.io';
 import * as process from 'process';
 
 function namespace(obj: Construct): string {
@@ -28,6 +29,7 @@ export interface CockroachService {
 export class Shared extends Chart {
   public readonly passwordGen: Password;
   public readonly cockroachService: CockroachService;
+  public readonly issuer: ClusterIssuer;
 
   constructor(scope: Construct, id: string) {
     super(scope, id, {
@@ -43,6 +45,24 @@ export class Shared extends Chart {
         length: 32,
         noUpper: false,
         allowRepeat: true,
+      },
+    });
+
+    this.issuer = new ClusterIssuer(this, 'issuer', {
+      metadata: {
+        namespace: 'cert-manager',
+      },
+      spec: {
+        acme: {
+          email: 'joseph@josephmartin.org',
+          server: 'https://acme-v02.api.letsencrypt.org/directory',
+          privateKeySecretRef: {
+            name: Lazy.any({produce: () => `${this.issuer.name}-key` }),
+          },
+          solvers: [{
+            dns01: { digitalocean: { tokenSecretRef: { name: 'digitalocean-token', key: 'access-token' } } },
+          }],
+        },
       },
     });
 
@@ -322,6 +342,20 @@ export class Gitea extends Chart {
     const databaseName = 'gitea';
     const databaseUser = 'gitea';
 
+    const cert: Certificate = new Certificate(this, 'cert', {
+      metadata: {},
+      spec: {
+        secretName: Lazy.any({produce: () => cert.name}),
+        issuerRef: {
+          name: shared.issuer.name,
+          kind: shared.issuer.kind,
+          group: shared.issuer.apiGroup,
+        },
+        commonName: 'gitea.home.josephmartin.org',
+        dnsNames: ['gitea.home.josephmartin.org'],
+      },
+    });
+
     /*
     const extSecretsServiceAcc = new ServiceAccount(this, 'ext-secrets-acc');
     const extSecretsRole = new Role(this, 'ext-secrets-role', {
@@ -483,7 +517,7 @@ export class Gitea extends Chart {
           ssh: {
             port: 22,
             type: 'LoadBalancer',
-            externalIPs: ['10.16.2.12'],
+            externalIPs: ['10.16.2.13'],
           },
         },
         image: {
@@ -545,6 +579,9 @@ export class Gitea extends Chart {
             }],
           },
         ],
+        tls: {
+          secretName: cert.name,
+        },
       },
     });
   }

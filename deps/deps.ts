@@ -62,6 +62,32 @@ export class Rook extends Chart {
   }
 }
 
+export class CertManager extends Chart {
+  constructor(scope: Construct, id: string) {
+    super(scope, id, {
+      namespace: 'cert-manager',
+      labels: {
+        'prune-id': id,
+      }
+    });
+
+    new Namespace(this, 'namespace', {
+      metadata: {
+        name: this.namespace,
+      },
+    });
+
+    new Helm(this, 'chart', {
+      chart: process.env.npm_config_certmanager!,
+      namespace: this.namespace,
+      helmFlags: ['--kube-version', kubeVersion, '--include-crds'],
+      values: {
+        installCRDs: true,
+      },
+    });
+  }
+}
+
 export class Traefik extends Chart {
   constructor(scope: Construct, id: string) {
     super(scope, id, {
@@ -86,7 +112,15 @@ export class Traefik extends Chart {
             enabled: false,
           },
         },
-        additionalArguments: ['--serversTransport.insecureSkipVerify=true'],
+        deployment: {
+          replicas: 3,
+        },
+        service: {
+          externalIPs: ['10.16.2.13'],
+        },
+        additionalArguments: [
+          '--serversTransport.insecureSkipVerify=true',
+        ],
       },
       helmFlags: ['--kube-version', kubeVersion, '--include-crds'],
     });
@@ -166,6 +200,7 @@ export class CockroachDb extends Chart {
 const app = new App();
 new LocalPathProvisioner(app, 'local-path-provisioner');
 new Rook(app, 'rook');
+new CertManager(app, 'cert-manager');
 new Traefik(app, 'traefik');
 new MetalLB(app, 'metallb');
 new ExternalSecrets(app, 'external-secrets');
