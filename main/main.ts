@@ -494,7 +494,7 @@ export class Gitea extends Chart {
     });
 
     const httpPort = 8080;
-    const helm = new Helm(this, 'gitea', {
+    const helm: Helm = new Helm(this, 'gitea', {
       chart: process.env.npm_config_gitea!,
       namespace: this.namespace,
       helmFlags: ['--skip-tests'],
@@ -544,6 +544,7 @@ export class Gitea extends Chart {
             server: {
               PROTOCOL: 'http',
               ROOT_URL: 'https://gitea.home.josephmartin.org',
+              LOCAL_ROOT_URL: `http://${Lazy.any({produce: () => helm.releaseName})}-http.${namespace(this)}.svc.cluster.local:8080`,
               DOMAIN: 'gitea.home.josephmartin.org',
               SSH_DOMAIN: 'gitea.home.josephmartin.org',
             },
@@ -604,8 +605,10 @@ export class Gitea extends Chart {
     });
     let certsVolume = Volume.fromEmptyDir(this, 'certs', 'certs', { medium: EmptyDirMedium.MEMORY });
     let dataVolume = Volume.fromEmptyDir(this, 'data', 'data');
-    //let dockerHomeDir = Volume.fromEmptyDir(this, 'home', 'home');
-    //let dockerRuntimeDir = Volume.fromEmptyDir(this, 'runtime', 'runtime');
+    let dockerHomeDir = Volume.fromEmptyDir(this, 'home', 'home');
+    let dockerRuntimeDir = Volume.fromEmptyDir(this, 'runtime', 'runtime');
+    let runnerTmpDir = Volume.fromEmptyDir(this, 'runner-tmp', 'runner-tmp');
+    let dockerTmpDir = Volume.fromEmptyDir(this, 'docker-tmp', 'docker-tmp');
     let service = new Service(this, 'runners-service', {
       metadata: {},
       type: ServiceType.CLUSTER_IP,
@@ -643,6 +646,10 @@ export class Gitea extends Chart {
               volume: dataVolume,
               path: '/data',
             },
+            {
+              volume: runnerTmpDir,
+              path: '/tmp',
+            },
           ],
           securityContext: {
             user: 1000,
@@ -653,7 +660,6 @@ export class Gitea extends Chart {
             DOCKER_HOST: EnvValue.fromValue('tcp://localhost:2376'),
             DOCKER_TLS_VERIFY: EnvValue.fromValue('1'),
             DOCKER_CERT_PATH: EnvValue.fromValue('/certs/client'),
-            GITEA_INSTANCE_URL: EnvValue.fromValue(`http://${helm.releaseName}-http:${httpPort}`),
           },
         },
         {
@@ -664,7 +670,6 @@ export class Gitea extends Chart {
               volume: certsVolume,
               path: '/certs',
             },
-            /*
             {
               volume: dockerHomeDir,
               path: '/home/rootless',
@@ -673,18 +678,21 @@ export class Gitea extends Chart {
               volume: dockerRuntimeDir,
               path: '/run/user/1000',
             },
-            */
+            {
+              volume: dockerTmpDir,
+              path: '/tmp',
+            },
           ],
           envVariables: {
             DOCKER_TLS_CERT_DIR: EnvValue.fromValue('/certs'),
           },
           securityContext: {
-            ensureNonRoot: false,
+            //ensureNonRoot: false,
             privileged: true,
             allowPrivilegeEscalation: true,
-            readOnlyRootFilesystem: false,
-            //user: 1000,
-            //group: 1000,
+            //readOnlyRootFilesystem: false,
+            user: 1000,
+            group: 1000,
           }
         },
       ],
