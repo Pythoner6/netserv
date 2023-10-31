@@ -1,6 +1,6 @@
 import { Construct } from 'constructs';
 import { App, Chart, Helm, ApiObject, Lazy } from 'cdk8s';
-import { Namespace, ServiceType, Service, Pods, /*ServiceAccount, Role, RoleBinding,*/ Secret } from 'cdk8s-plus-27';
+import { Namespace, ServiceType, Service, Pods, /*ServiceAccount, Role, RoleBinding,*/ Secret, Volume, EnvValue, EmptyDirMedium, StatefulSet, EnvFieldPaths, ConfigMap, LabeledNode, NodeLabelQuery } from 'cdk8s-plus-27';
 //import { TidbCluster, TidbClusterSpecPdRequests, TidbClusterSpecTikvRequests, TidbInitializer } from './imports/pingcap.com';
 import { CephCluster, CephFilesystem, CephObjectStore } from '@pythoner6/netserv-deps/imports/ceph.rook.io';
 import { IpAddressPool, L2Advertisement } from '@pythoner6/netserv-deps/imports/metallb.io';
@@ -12,6 +12,7 @@ import { IngressRoute, IngressRouteSpecRoutesKind, IngressRouteSpecRoutesService
 import { CrdbCluster, CrdbClusterSpecDataStorePvcSpecResourcesRequests } from '@pythoner6/netserv-deps/imports/crdb.cockroachlabs.com';
 import { ClusterIssuer, Certificate } from '@pythoner6/netserv-deps/imports/cert-manager.io';
 import * as process from 'process';
+import * as fs from 'fs';
 
 function namespace(obj: Construct): string {
   return (ApiObject.isApiObject(obj) ? (obj as ApiObject).metadata.namespace : undefined) 
@@ -335,6 +336,11 @@ export class Gitea extends Chart {
     new Namespace(this, 'namespace', {
       metadata: {
         name: this.namespace,
+        labels: {
+          'pod-security.kubernetes.io/enforce': 'privileged',
+          'pod-security.kubernetes.io/audit': 'privileged',
+          'pod-security.kubernetes.io/warn': 'privileged',
+        },
       },
     });
 
@@ -487,6 +493,7 @@ export class Gitea extends Chart {
       },
     });
 
+    const httpPort = 8080;
     const helm = new Helm(this, 'gitea', {
       chart: process.env.npm_config_gitea!,
       namespace: this.namespace,
@@ -509,7 +516,7 @@ export class Gitea extends Chart {
         },
         service: {
           http: {
-            port: 8080,
+            port: httpPort,
             type: 'ClusterIP',
             clusterIP: undefined,
           },
@@ -539,6 +546,9 @@ export class Gitea extends Chart {
               ROOT_URL: 'https://gitea.home.josephmartin.org',
               DOMAIN: 'gitea.home.josephmartin.org',
               SSH_DOMAIN: 'gitea.home.josephmartin.org',
+            },
+            actions: {
+              ENABLED: true,
             },
             database: {
               DB_TYPE: 'postgres',
@@ -576,7 +586,7 @@ export class Gitea extends Chart {
             priority: 10,
             services: [{
               name: `${helm.releaseName}-http`,
-              port: IngressRouteSpecRoutesServicesPort.fromNumber(8080),
+              port: IngressRouteSpecRoutesServicesPort.fromNumber(httpPort),
             }],
           },
         ],
@@ -585,6 +595,107 @@ export class Gitea extends Chart {
         },
       },
     });
+
+    let registration = Volume.fromSecret(this, 'runner-config-volume', Secret.fromSecretName(this, 'runner-config-secret', 'act-runner-config'));
+    let runnerConfig = new ConfigMap(this, 'runner-configmap', {
+      data: {
+        config: fs.readFileSync('act-runner-config.yaml').toString(),
+      },
+    });
+    let certsVolume = Volume.fromEmptyDir(this, 'certs', 'certs', { medium: EmptyDirMedium.MEMORY });
+    let dataVolume = Volume.fromEmptyDir(this, 'data', 'data');
+    //let dockerHomeDir = Volume.fromEmptyDir(this, 'home', 'home');
+    //let dockerRuntimeDir = Volume.fromEmptyDir(this, 'runtime', 'runtime');
+    let service = new Service(this, 'runners-service', {
+      metadata: {},
+      type: ServiceType.CLUSTER_IP,
+      clusterIP: 'None',
+      ports: [{port: 9999}],
+    });
+    const amd64Runners = new StatefulSet(this, 'runners', {
+      metadata: {},
+      replicas: 3,
+      service,
+      containers: [
+        {
+          name: 'runner',
+          image: 'docker.io/gitea/act_runner:0.2.6',
+          command: ['act_runner'],
+          args: ['daemon', '--config', '/config'],
+          volumeMounts: [
+            {
+              volume: Volume.fromConfigMap(this, 'runner-config', runnerConfig),
+              path: '/config',
+              subPath: 'config',
+            },
+            {
+              volume: registration,
+              path: '/registration',
+              subPathExpr: '$(POD_NAME)',
+            },
+            {
+              volume: certsVolume,
+              path: '/certs/client',
+              subPath: 'client',
+              readOnly: true,
+            },
+            {
+              volume: dataVolume,
+              path: '/data',
+            },
+          ],
+          securityContext: {
+            user: 1000,
+            group: 1000,
+          },
+          envVariables: {
+            POD_NAME: EnvValue.fromFieldRef(EnvFieldPaths.POD_NAME),
+            DOCKER_HOST: EnvValue.fromValue('tcp://localhost:2376'),
+            DOCKER_TLS_VERIFY: EnvValue.fromValue('1'),
+            DOCKER_CERT_PATH: EnvValue.fromValue('/certs/client'),
+            GITEA_INSTANCE_URL: EnvValue.fromValue(`http://${helm.releaseName}-http:${httpPort}`),
+          },
+        },
+        {
+          name: 'docker',
+          image: 'docker.io/docker:dind-rootless',
+          volumeMounts: [
+            {
+              volume: certsVolume,
+              path: '/certs',
+            },
+            /*
+            {
+              volume: dockerHomeDir,
+              path: '/home/rootless',
+            },
+            {
+              volume: dockerRuntimeDir,
+              path: '/run/user/1000',
+            },
+            */
+          ],
+          envVariables: {
+            DOCKER_TLS_CERT_DIR: EnvValue.fromValue('/certs'),
+          },
+          securityContext: {
+            ensureNonRoot: false,
+            privileged: true,
+            allowPrivilegeEscalation: true,
+            readOnlyRootFilesystem: false,
+            //user: 1000,
+            //group: 1000,
+          }
+        },
+      ],
+      volumes: [
+        certsVolume
+      ],
+    });
+
+    amd64Runners.scheduling.attract(new LabeledNode([
+      NodeLabelQuery.is('kubernetes.io/arch', 'amd64'),
+    ]));
   }
 }
 
