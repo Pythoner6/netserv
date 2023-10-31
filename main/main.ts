@@ -544,7 +544,7 @@ export class Gitea extends Chart {
             server: {
               PROTOCOL: 'http',
               ROOT_URL: 'https://gitea.home.josephmartin.org',
-              LOCAL_ROOT_URL: `http://${Lazy.any({produce: () => helm.releaseName})}-http.${namespace(this)}.svc.cluster.local:8080`,
+              LOCAL_ROOT_URL: 'http://localhost:8080',
               DOMAIN: 'gitea.home.josephmartin.org',
               SSH_DOMAIN: 'gitea.home.josephmartin.org',
             },
@@ -619,6 +619,10 @@ export class Gitea extends Chart {
       metadata: {},
       replicas: 3,
       service,
+      hostAliases: [{
+        hostnames: ['gitea.home.josephmartin.org'],
+        ip: '10.16.2.13',
+      }],
       containers: [
         {
           name: 'runner',
