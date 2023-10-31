@@ -8,9 +8,11 @@ jobs:
     steps:
       - name: Check out repository code
         uses: actions/checkout@v3
-      #- uses: cachix/install-nix-action@v23
-      #  with:
-      #    nix_path: nixpkgs=channel:nixos-23.05
-      - name: Install Nix
-        uses: DeterminateSystems/nix-installer-action@main
+      - name: Install sudo
+        run: apt-get update && apt-get install sudo
+      - uses: cachix/install-nix-action@v23
+        with:
+          nix_path: nixpkgs=channel:nixos-23.05
+      #- name: Install Nix
+      #  uses: DeterminateSystems/nix-installer-action@main
       - run: nix build
