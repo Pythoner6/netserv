@@ -16,3 +16,4 @@ jobs:
       #- name: Install Nix
       #  uses: DeterminateSystems/nix-installer-action@main
       - run: nix build
+      - run: nix develop .#push -c bash -c "skopeo login --username ${{ gitea.actor }} --password ${{ secrets.GITEA_TOKEN }} --tls-verify gitea.home.josephmartin.org && skopeo copy oci:result/oci-image:latest docker://gitea.home.josephmartin.org/${{ gitea.actor }}/netserv"

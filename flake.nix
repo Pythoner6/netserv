@@ -1,13 +1,15 @@
 {
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-23.05";
+    nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
   };
-  outputs = { self, nixpkgs }:
+  outputs = { self, nixpkgs, nixpkgs-unstable }:
     let
       system = "x86_64-linux";
       name = "netserv";
       src = ./.;
       pkgs = nixpkgs.legacyPackages.${system};
+      pkgs-unstable = nixpkgs-unstable.legacyPackages.${system};
 
       metallb-chart = pkgs.fetchzip {
         url = "https://github.com/metallb/metallb/releases/download/metallb-chart-0.13.12/metallb-0.13.12.tgz";
@@ -105,7 +107,7 @@
         pname = "netserv-main";
         src = ./main;
         npmDepsHash = "sha256-sWj3KBuxqq1StZ4XuQscpe3zy33YT8VLFKasq1zWyOU=";
-        nativeBuildInputs = with pkgs; [ yq-go kubernetes-helm nodejs nodePackages.npm typescript ];
+        nativeBuildInputs = with pkgs; [ yq-go kubernetes-helm nodejs nodePackages.npm typescript umoci ];
         makeCacheWritable = true;
         npmBuildFlags = [
           "--gitea=${gitea-chart}"
@@ -115,13 +117,24 @@
           npm i deps.tgz
         '';
         installPhase = ''
-          mkdir -p $out/deps
-          cp -a dist/. $out
-          cp -a node_modules/@pythoner6/netserv-deps/dist/. $out/deps
+          mkdir -p $out/manifests
+          for dir in dist node_modules/@pythoner6/netserv-deps/dist; do
+            find $dir -type f -exec bash -c "n=\$(basename --suffix=.k8s.yaml {}); mkdir -p $out/manifests/\$n; cp {} $out/manifests/\$n/manifest.yaml" \;
+          done
+          set -x
+          cp -a flux-system $out/manifests
+          umoci init --layout $out/oci-image
+          umoci new --image $out/oci-image:latest
+          umoci unpack --uid-map 0:$(id -u) --gid-map 0:$(id -g) --image $out/oci-image:latest bundle
+          cp -a $out/manifests/flux-system bundle/rootfs
+          umoci repack --image $out/oci-image:latest bundle
         '';
       };
       devShells.x86_64-linux.default = pkgs.mkShell {
-        buildInputs = with pkgs; [ postgresql jq nodejs nodePackages.npm typescript kubernetes-helm ];
+        buildInputs = with pkgs; [ postgresql jq nodejs nodePackages.npm typescript kubernetes-helm pkgs-unstable.fluxcd umoci skopeo pkgs-unstable.weave-gitops ];
+      };
+      devShells.x86_64-linux.push = pkgs.mkShell {
+        buildInputs = with pkgs; [ skopeo ];
       };
     };
 }

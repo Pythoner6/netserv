@@ -733,6 +733,17 @@ export class MetalLBConf extends Chart {
   }
 }
 
+export class WeaveGitops extends Chart {
+  constructor(scope: Construct, id: string) {
+    super(scope, id, {
+      namespace: 'flux-system',
+      labels: {
+        'prune-id': id,
+      },
+    });
+  }
+}
+
 const app = new App();
 const shared = new Shared(app, 'shared');
 const ceph = new Ceph(app, 'ceph', {shared});
