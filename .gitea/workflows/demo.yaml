@@ -20,4 +20,4 @@ jobs:
       - name: Push to registry
         run: |
           mkdir -p /etc/containers && cp policy.json /etc/containers/policy.json
-          nix develop .#push -c bash -c "skopeo login --username ${{ gitea.actor }} --password ${{ secrets.GITEA_TOKEN }} --authfile auth.json --tls-verify gitea.home.josephmartin.org && cat auth.json && skopeo copy --authfile auth.json oci:result/oci-image:latest docker://gitea.home.josephmartin.org/${{ gitea.actor }}/netserv"
+          nix develop .#push -c skopeo copy --dest-username ${{ gitea.actor }} --dest-password ${{ secrets.GITEA_TOKEN }} --dest-tls-verify oci:result/oci-image:latest docker://gitea.home.josephmartin.org/${{ gitea.actor }}/netserv"
