@@ -15,6 +15,9 @@ jobs:
           nix_path: nixpkgs=channel:nixos-23.05
       #- name: Install Nix
       #  uses: DeterminateSystems/nix-installer-action@main
-      - run: nix build
-      - run: mkdir -p /etc/containers && cp policy.json /etc/containers/policy.json
-      - run: nix develop .#push -c bash -c "skopeo login --username ${{ gitea.actor }} --password ${{ secrets.GITEA_TOKEN }} --authfile auth.json --tls-verify gitea.home.josephmartin.org && skopeo copy --authfile auth.json oci:result/oci-image:latest docker://gitea.home.josephmartin.org/${{ gitea.actor }}/netserv"
+      - name: Build manifests
+        run: nix build
+      - name: Push to registry
+        run: |
+          mkdir -p /etc/containers && cp policy.json /etc/containers/policy.json
+          nix develop .#push -c bash -c "skopeo login --username ${{ gitea.actor }} --password ${{ secrets.GITEA_TOKEN }} --authfile auth.json --tls-verify gitea.home.josephmartin.org && cat auth.json && skopeo copy --authfile auth.json oci:result/oci-image:latest docker://gitea.home.josephmartin.org/${{ gitea.actor }}/netserv"
