@@ -45,6 +45,20 @@
           cp -r deploy/chart/local-path-provisioner/ $out/
         '';
       };
+      weaveworks-gitops-chart = pkgs.stdenv.mkDerivation {
+        name = "weaveworks-gitops-chart";
+        src = pkgs.fetchgit {
+          url = "https://github.com/weaveworks/weave-gitops.git";
+          rev = "v0.35.0";
+          nonConeMode = true;
+          sparseCheckout = [ "charts/gitops-server" ];
+          hash = "sha256-uvooIZVUm9+ykxMZg8NoQxFXXLbDFFFgILz/fU5X/ug=";
+        };
+        buildPhase = "true";
+        installPhase = ''
+          cp -r charts/gitops-server/ $out/
+        '';
+      };
       cockroachdb-manifest = pkgs.stdenv.mkDerivation {
         name = "cockroachdb";
         src = pkgs.fetchgit {
@@ -94,6 +108,7 @@
           "--local-path-provisioner=${local-path-provisioner-chart}" 
           "--cockroachdb=${cockroachdb-manifest}"
           "--certmanager=${cert-manager-chart}"
+          "--gitops=${weaveworks-gitops-chart}"
         ];
         postBuild = ''
           npm pack
@@ -127,6 +142,7 @@
           umoci new --image $out/oci-image:latest
           umoci unpack --uid-map 0:$(id -u) --gid-map 0:$(id -g) --image $out/oci-image:latest bundle
           cp -a $out/manifests/flux-system bundle/rootfs
+          cp -a $out/manifests/weaveworks-gitops bundle/rootfs
           umoci repack --image $out/oci-image:latest bundle
         '';
       };

@@ -197,6 +197,28 @@ export class CockroachDb extends Chart {
   }
 }
 
+export class WeaveworksGitops extends Chart {
+  constructor(scope: Construct, id: string) {
+    super(scope, id, {
+      namespace: 'weaveworks-gitops',
+      labels: {
+        'prune-id': id,
+      }
+    });
+
+    new Namespace(this, 'namespace', {
+      metadata: {
+        name: this.namespace,
+      },
+    });
+
+    new Helm(this, 'chart', {
+      chart: process.env.npm_config_gitops!,
+      namespace: this.namespace,
+    });
+  }
+}
+
 const app = new App();
 new LocalPathProvisioner(app, 'local-path-provisioner');
 new Rook(app, 'rook');
@@ -205,4 +227,5 @@ new Traefik(app, 'traefik');
 new MetalLB(app, 'metallb');
 new ExternalSecrets(app, 'external-secrets');
 new CockroachDb(app, 'cockroachdb');
+new WeaveworksGitops(app, 'weaveworks-gitops');
 app.synth();
