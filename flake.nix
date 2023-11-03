@@ -134,7 +134,7 @@
         installPhase = ''
           mkdir -p $out/manifests
           for dir in dist node_modules/@pythoner6/netserv-deps/dist; do
-            find $dir -type f -exec bash -c "n=\$(basename --suffix=.k8s.yaml {}); mkdir -p $out/manifests/\$n; cp {} $out/manifests/\$n/manifest.yaml" \;
+            find $dir -type f -exec bash -c "n=\$(basename --suffix=.k8s.yaml {}); mkdir -p $out/manifests/\$n; cp {} $out/manifests/\$n/manifest.yaml; cp kustomization.yaml $out/manifests/\$n/" \;
           done
           set -x
           cp -a flux-system $out/manifests
@@ -147,7 +147,7 @@
         '';
       };
       devShells.x86_64-linux.default = pkgs.mkShell {
-        buildInputs = with pkgs; [ postgresql jq nodejs nodePackages.npm typescript kubernetes-helm pkgs-unstable.fluxcd umoci skopeo pkgs-unstable.weave-gitops ];
+        buildInputs = with pkgs; [ postgresql jq nodejs nodePackages.npm typescript kubernetes-helm pkgs-unstable.fluxcd umoci skopeo pkgs-unstable.weave-gitops go ];
       };
       devShells.x86_64-linux.push = pkgs.mkShell {
         buildInputs = with pkgs; [ skopeo ];
