@@ -770,8 +770,8 @@ export class WeaveworksGitops extends Chart {
           template: {
             engineVersion: 'v2',
             data: {
-              'admin-plaintext': '{{ .password }}'
-              'admin': '{{ .password | crypto.Bcrypt }}'
+              'admin-plaintext': '{{ .password }}',
+              'admin': '{{ .password | crypto.Bcrypt }}',
             },
           },
         },
