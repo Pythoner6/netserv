@@ -6,7 +6,7 @@ import { CephCluster, CephFilesystem, CephObjectStore } from '@pythoner6/netserv
 import { IpAddressPool, L2Advertisement } from '@pythoner6/netserv-deps/imports/metallb.io';
 import { KubeStorageClass } from './imports/k8s';
 //import { ClusterSecretStoreV1Beta1, ClusterExternalSecret, ExternalSecretV1Beta1, ClusterSecretStoreV1Beta1SpecProviderKubernetesServerCaProviderType } from '@pythoner6/netserv-deps/imports/external-secrets.io';
-import { ExternalSecretV1Beta1, } from '@pythoner6/netserv-deps/imports/external-secrets.io';
+import { ExternalSecretV1Beta1 } from '@pythoner6/netserv-deps/imports/external-secrets.io';
 import { Password } from '@pythoner6/netserv-deps/imports/generators.external-secrets.io';
 import { IngressRoute, IngressRouteSpecRoutesKind, IngressRouteSpecRoutesServicesKind, IngressRouteSpecRoutesServicesPort } from '@pythoner6/netserv-deps/imports/traefik.io';
 import { CrdbCluster, CrdbClusterSpecDataStorePvcSpecResourcesRequests } from '@pythoner6/netserv-deps/imports/crdb.cockroachlabs.com';
@@ -733,12 +733,66 @@ export class MetalLBConf extends Chart {
   }
 }
 
-export class WeaveGitops extends Chart {
+export class WeaveworksGitops extends Chart {
   constructor(scope: Construct, id: string) {
     super(scope, id, {
-      namespace: 'flux-system',
+      namespace: 'weaveworks-gitops',
       labels: {
         'prune-id': id,
+      }
+    });
+
+    new Namespace(this, 'namespace', {
+      metadata: {
+        name: this.namespace,
+      },
+    });
+
+    const passwordGen = new Password(this, 'password', {
+      metadata: {
+      },
+      spec: {
+        length: 32,
+        noUpper: false,
+        allowRepeat: true,
+        symbolCharacters: '-_$@!%^&*()+={}[]?/<>',
+      },
+    });
+
+    const authSecret: ExternalSecretV1Beta1 = new ExternalSecretV1Beta1(this, 'cluster-user-auth', {
+      metadata: {
+        name: 'cluster-user-auth',
+      },
+      spec: {
+        refreshInterval: "0",
+        target: {
+          name: Lazy.any({produce: () => authSecret.name}),
+          template: {
+            engineVersion: 'v2',
+            data: {
+              'admin': '{{ .password }}'
+            },
+          },
+        },
+        dataFrom: [{
+          sourceRef: {
+            generatorRef: {
+              apiVersion: passwordGen.apiVersion,
+              kind: passwordGen.kind,
+              name: passwordGen.name,
+            }
+          },
+        }],
+      },
+    });
+
+    new Helm(this, 'chart', {
+      chart: process.env.npm_config_gitops!,
+      namespace: this.namespace,
+      values: {
+        adminUser: {
+          username: 'admin',
+        },
       },
     });
   }
@@ -752,5 +806,6 @@ new Gitea(app, 'gitea', {
   shared,
 });
 new MetalLBConf(app, 'metallb-conf');
+new WeaveworksGitops(app, 'weaveworks-gitops');
 
 app.synth();

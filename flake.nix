@@ -108,7 +108,6 @@
           "--local-path-provisioner=${local-path-provisioner-chart}" 
           "--cockroachdb=${cockroachdb-manifest}"
           "--certmanager=${cert-manager-chart}"
-          "--gitops=${weaveworks-gitops-chart}"
         ];
         postBuild = ''
           npm pack
@@ -126,6 +125,7 @@
         makeCacheWritable = true;
         npmBuildFlags = [
           "--gitea=${gitea-chart}"
+          "--gitops=${weaveworks-gitops-chart}"
         ];
         preBuild = ''
           ln -s ${packages.x86_64-linux.deps} deps.tgz
