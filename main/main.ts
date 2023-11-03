@@ -793,6 +793,8 @@ export class WeaveworksGitops extends Chart {
       values: {
         adminUser: {
           username: 'admin',
+          create: true,
+          createSecret: false,
         },
       },
     });
