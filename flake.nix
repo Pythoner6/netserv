@@ -132,17 +132,24 @@
           npm i deps.tgz
         '';
         installPhase = ''
-          mkdir -p $out/manifests
+          mkdir -p $out/apps
           for dir in dist node_modules/@pythoner6/netserv-deps/dist; do
-            find $dir -type f -exec bash -c "n=\$(basename --suffix=.k8s.yaml {}); mkdir -p $out/manifests/\$n; cp {} $out/manifests/\$n/manifest.yaml; cp kustomization.yaml $out/manifests/\$n/" \;
+            IFS=$'\n'
+            for chart in $(find $dir -type f); do
+              n="$(basename --suffix=.k8s.yaml "$chart")"
+              mkdir -p "$out/apps/$n/manifests"
+              cp "$chart" "$out/apps/$n/manifests/$n.yaml"
+              cp kustomization.yaml "$out/apps/$n/"
+              cat flux.yaml | sed "s/{{NAME}}/$n/" > "$out/apps/$n/flux.yaml"
+            done
           done
           set -x
-          cp -a flux-system $out/manifests
+          cp -a flux-system $out/apps
           umoci init --layout $out/oci-image
           umoci new --image $out/oci-image:latest
           umoci unpack --uid-map 0:$(id -u) --gid-map 0:$(id -g) --image $out/oci-image:latest bundle
-          cp -a $out/manifests/flux-system bundle/rootfs
-          cp -a $out/manifests/weaveworks-gitops bundle/rootfs
+          cp -a $out/apps/flux-system bundle/rootfs
+          cp -a $out/apps/weaveworks-gitops bundle/rootfs
           umoci repack --image $out/oci-image:latest bundle
         '';
       };
