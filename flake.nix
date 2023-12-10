@@ -1,15 +1,13 @@
 {
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-23.05";
-    nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-23.11";
   };
-  outputs = { self, nixpkgs, nixpkgs-unstable }:
+  outputs = { self, nixpkgs }:
     let
       system = "x86_64-linux";
       name = "netserv";
       src = ./.;
       pkgs = nixpkgs.legacyPackages.${system};
-      pkgs-unstable = nixpkgs-unstable.legacyPackages.${system};
 
       metallb-chart = pkgs.fetchzip {
         url = "https://github.com/metallb/metallb/releases/download/metallb-chart-0.13.12/metallb-0.13.12.tgz";
@@ -143,7 +141,6 @@
               cat flux.yaml | sed "s/{{NAME}}/$n/" > "$out/apps/$n/flux.yaml"
             done
           done
-          set -x
           cp -a flux-system $out/apps
           umoci init --layout $out/oci-image
           umoci new --image $out/oci-image:latest
@@ -154,7 +151,7 @@
         '';
       };
       devShells.x86_64-linux.default = pkgs.mkShell {
-        buildInputs = with pkgs; [ postgresql jq nodejs nodePackages.npm typescript kubernetes-helm pkgs-unstable.fluxcd umoci skopeo pkgs-unstable.weave-gitops go ];
+        buildInputs = with pkgs; [ postgresql jq nodejs nodePackages.npm typescript kubernetes-helm fluxcd umoci skopeo weave-gitops go ];
       };
       devShells.x86_64-linux.push = pkgs.mkShell {
         buildInputs = with pkgs; [ skopeo ];
