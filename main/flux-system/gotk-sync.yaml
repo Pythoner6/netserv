@@ -8,7 +8,7 @@ spec:
   interval: 1m0s
   ref:
     tag: latest
-  url: oci://gitea.home.josephmartin.org/joseph/netserv
+  url: oci://ghcr.io/pythoner6/netserv
 ---
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
