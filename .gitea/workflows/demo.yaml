@@ -12,7 +12,7 @@ jobs:
         run: apt-get update && apt-get install sudo
       - uses: cachix/install-nix-action@v23
         with:
-          nix_path: nixpkgs=channel:nixos-23.05
+          nix_path: nixpkgs=channel:nixos-23.11
       #- name: Install Nix
       #  uses: DeterminateSystems/nix-installer-action@main
       - name: Build manifests
