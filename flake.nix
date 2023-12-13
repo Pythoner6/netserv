@@ -146,7 +146,7 @@
           umoci new --image $out/oci-image:latest
           umoci unpack --uid-map 0:$(id -u) --gid-map 0:$(id -g) --image $out/oci-image:latest bundle
           cp -a $out/apps/flux-system bundle/rootfs
-          cp -a $out/apps/weaveworks-gitops bundle/rootfs
+          #cp -a $out/apps/weaveworks-gitops bundle/rootfs
           umoci repack --image $out/oci-image:latest bundle
         '';
       };
