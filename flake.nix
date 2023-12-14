@@ -273,10 +273,15 @@
           '';
           buildPhase = "true";
           installPhase = ''
-            mkdir -p $out/flux-system
-            cp ${flux-manifests} $out/flux-system/flux.yaml
-            cue export ./flux-system:resources -e resources --out text > $out/flux-system/resources.yaml
-            cue export ./flux-system:kustomization -e kustomization --out text > $out/flux-system/kustomization.yaml
+            IFS=$'\n'; readarray -t apps <<<"$(find ./apps/ -maxdepth 1 -mindepth 1 -type d -printf '%f\n')"
+            for app in "${"$"}{apps[@]}"; do
+              mkdir -p $out/$app/
+              if [[ "$app" == "flux-system" ]]; then
+                cp ${flux-manifests} $out/$app/flux.yaml
+              fi
+              cue export ./apps/$app:resources -e resources --out text > $out/$app/resources.yaml
+              cue export ./apps/$app:kustomization -e kustomization --out text > $out/$app/kustomization.yaml
+            done
           '';
         };
         test-img = buildImage {

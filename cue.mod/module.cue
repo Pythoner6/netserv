@@ -1,1 +1,1 @@
-module: "pythoner6.dev/resources"
+module: "pythoner6.dev/netserv"
