@@ -2,33 +2,16 @@ package resources
 
 import (
   "encoding/yaml"
-  //"list"
-  //"pythoner6.dev/test/foo"
   corev1 "k8s.io/api/core/v1"
 )
 
+// Default namespace. Name defined in leaf directory
 #Namespace: corev1.#Namespace & {
   _name: string
-  apiVersion: "v1"
-  kind: "Namespace"
-  metadata: {
-    name: _name
-  }
+  metadata: name: _name
 }
-#WithNamespace: {
-  metadata: {
-    namespace: string | *#Namespace.metadata.name
-    ...
-  }
-  ...
-}
-#WithoutNamespace: {
-  metadata: {
-    namespace?: _|_
-    ...
-  }
-  ...
-}
+
+// Object reference helper
 #Ref: {
   _obj: { 
     apiVersion: string
@@ -48,7 +31,13 @@ import (
   name: _obj.metadata.name
 }
 
-#ClusterResources: {[_]: #WithoutNamespace}
-#Resources: {[_]: #WithNamespace}
+// Cluster scoped resources should not have a namespace
+#ClusterResources: {[_]: {metadata: namespace?: _|_}}
+// On namespaced resources, set the default namespace
+#Resources: {[_]: {metadata: namespace: string | *#Namespace.metadata.name}}
 
-resources: yaml.MarshalStream([ for _, r in #ClusterResources {r}, for _, r in #Resources {r} ])
+// Exported string of yaml documents
+resources: yaml.MarshalStream([
+  for _, r in #ClusterResources {r},
+  for _, r in #Resources {r},
+])
