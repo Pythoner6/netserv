@@ -7,21 +7,19 @@ import (
 
 #Namespace: {_name: "flux-system"}
 #Resources: {
-  netserv_ghcr: ocirepository.#OCIRepository & {
-    metadata: name: "netserv-ghcr"
+  ghcr="netserv-ghcr": ocirepository.#OCIRepository & {
     spec: {
       interval: "1m0s"
       ref: tag: "latest"
       url: "oci://ghcr.io/pythoner6/netserv"
     }
   }
-  ks: kustomization.#Kustomization & {
-    metadata: name: "netserv"
+  netserv: kustomization.#Kustomization & {
     spec: {
       path: "./"
       interval: "10m0s"
       prune: true
-      sourceRef: #Ref & {_obj: netserv_ghcr}
+      sourceRef: #Ref & {_obj: ghcr}
     }
   }
 }

@@ -32,9 +32,23 @@ import (
 }
 
 // Cluster scoped resources should not have a namespace
-#ClusterResources: {[_]: {metadata: namespace?: _|_}}
+#ClusterResources: {
+  [Name=_]: {
+    metadata: {
+      namespace?: _|_
+      name: string | *Name
+    }
+  }
+}
 // On namespaced resources, set the default namespace
-#Resources: {[_]: {metadata: namespace: string | *#Namespace.metadata.name}}
+#Resources: {
+  [Name=_]: {
+    metadata: {
+      namespace: string | *#Namespace.metadata.name
+      name: string | *Name
+    }
+  }
+}
 
 // Exported string of yaml documents
 resources: yaml.MarshalStream([
