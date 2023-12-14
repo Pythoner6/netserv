@@ -13,11 +13,11 @@ jobs:
         with:
           nix_path: nixpkgs=channel:nixos-23.11
       - name: Build manifests
-        run: nix build
+        run: nix build .#test-img
       - name: Push to registry
         env:
           ACTOR: "${{ github.actor }}"
           TOKEN: "${{ secrets.PACKAGE_PUBLISH_TOKEN }}"
         run: |
           ACTOR=${ACTOR,,}
-          nix develop .#push -c skopeo copy --dest-username "$ACTOR" --dest-password "$TOKEN" --dest-tls-verify oci:result/oci-image:latest "docker://ghcr.io/$ACTOR/netserv"
+          nix develop .#push -c skopeo copy --dest-username "$ACTOR" --dest-password "$TOKEN" --dest-tls-verify oci:result:latest "docker://ghcr.io/$ACTOR/netserv"
