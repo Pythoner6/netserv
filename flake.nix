@@ -11,7 +11,7 @@
       pkgs = nixpkgs.legacyPackages.${system};
       pkgs-unstable = nixpkgs-unstable.legacyPackages.${system};
 
-      kube-version = "v1.27.3";
+      kube-version = "v1.29.0";
 
       flux = "${pkgs.fetchzip {
         url = "https://github.com/fluxcd/flux2/releases/download/v2.2.0/flux_2.2.0_linux_amd64.tar.gz";
@@ -253,7 +253,7 @@
           name = "vendor-k8s";
           src = ./cue-k8s-go;
           nativeBuildInputs = with pkgs; [ cue ];
-          vendorHash = "sha256-IHsac33UiHNpr4u82kHGD2SEx4vgrTS/6UogCGZTTes=";
+          vendorHash = "sha256-M0zdXmTfyykNtzkQu1D/+DWAoeOWOpLS7Qy6UFT6/Ns=";
           buildPhase = ''
             cue get go k8s.io/api/...
             cue get go k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1
