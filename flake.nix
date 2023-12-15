@@ -294,11 +294,10 @@
                 --inject "applicationDir=$app"
                 --inject "outputDir=$out/$app"
               )
-              if [[ "$app" == "flux-system" ]]; then
+              if [[ "$app" == "flux-components" ]]; then
                 injections+=(--inject 'extraManifests={"flux-components.yaml":"${flux-manifests}"}')
               fi
-              cue cmd -v "${"$"}{injections[@]}" synth ./apps/$app:resources
-              #cue export ./apps/$app:kustomization -e kustomization --out text > $out/$app/kustomization.yaml
+              cue cmd -v "${"$"}{injections[@]}" synth ./apps/$app:netserv
             done
           '';
         };

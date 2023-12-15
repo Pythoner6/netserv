@@ -1,4 +1,4 @@
-package resources
+package netserv
 
 import (
   kustomization "kustomize.toolkit.fluxcd.io/kustomization/v1"
@@ -14,7 +14,7 @@ fluxResources: {
       url: "oci://ghcr.io/pythoner6/netserv"
     }
   }
-  "global-kustomization": kustomization.#Kustomization & {
+  "root": kustomization.#Kustomization & {
     spec: {
       path: "./"
       interval: "10m0s"

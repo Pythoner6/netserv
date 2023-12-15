@@ -1,4 +1,4 @@
-package resources
+package netserv
 
 import (
   "path"
