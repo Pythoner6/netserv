@@ -1,13 +1,15 @@
 {
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-23.11";
+    nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
   };
-  outputs = { self, nixpkgs }:
+  outputs = { self, nixpkgs, nixpkgs-unstable }:
     let
       system = "x86_64-linux";
       name = "netserv";
       src = ./.;
       pkgs = nixpkgs.legacyPackages.${system};
+      pkgs-unstable = nixpkgs-unstable.legacyPackages.${system};
 
       kube-version = "v1.27.3";
 
@@ -261,10 +263,20 @@
             cp -a cue.mod/gen/. $out
           '';
         };
+        crds = pkgs.stdenv.mkDerivation {
+          name = "crds";
+          buildInputs = [vendor-k8s flux-crds cert-manager-crds rook-crds external-secrets-crds];
+          unpackPhase = "true";
+          configurePhase = ''
+            mkdir $out
+            IFS=$'\n'; readarray -t gen <<<"$(unset IFS; find $buildInputs -maxdepth 1 -mindepth 1 -type d)"
+            cp -a "${"$"}{gen[@]}" $out/
+          '';
+        };
         test = pkgs.stdenv.mkDerivation {
           name = "test";
           buildInputs = [vendor-k8s flux-crds cert-manager-crds rook-crds external-secrets-crds];
-          nativeBuildInputs = with pkgs; [ cue ];
+          nativeBuildInputs = with pkgs; [ pkgs-unstable.cue ];
           src = ./.;
           configurePhase = ''
             mkdir cue.mod/gen/
@@ -275,12 +287,18 @@
           installPhase = ''
             IFS=$'\n'; readarray -t apps <<<"$(find ./apps/ -maxdepth 1 -mindepth 1 -type d -printf '%f\n')"
             for app in "${"$"}{apps[@]}"; do
-              mkdir -p $out/$app/
+              mkdir -p $out/$app/manifests
+              echo "$out/$app/"
+              declare -a injections
+              injections=(
+                --inject "applicationDir=$app"
+                --inject "outputDir=$out/$app"
+              )
               if [[ "$app" == "flux-system" ]]; then
-                cp ${flux-manifests} $out/$app/flux.yaml
+                injections+=(--inject 'extraManifests={"flux-components.yaml":"${flux-manifests}"}')
               fi
-              cue export ./apps/$app:resources -e resources --out text > $out/$app/resources.yaml
-              cue export ./apps/$app:kustomization -e kustomization --out text > $out/$app/kustomization.yaml
+              cue cmd -v "${"$"}{injections[@]}" synth ./apps/$app:resources
+              #cue export ./apps/$app:kustomization -e kustomization --out text > $out/$app/kustomization.yaml
             done
           '';
         };
@@ -291,7 +309,7 @@
       };
       devShells.${system} = {
         default = pkgs.mkShell {
-          buildInputs = with pkgs; [ cue timoni postgresql jq nodejs nodePackages.npm typescript kubernetes-helm fluxcd umoci skopeo weave-gitops yq-go go xxd ];
+          buildInputs = with pkgs; [ pkgs-unstable.cue pkgs-unstable.timoni postgresql jq nodejs nodePackages.npm typescript kubernetes-helm fluxcd umoci skopeo weave-gitops yq-go go xxd ];
         };
         push = pkgs.mkShell {
           buildInputs = with pkgs; [ skopeo ];

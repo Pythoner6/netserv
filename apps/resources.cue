@@ -1,9 +1,16 @@
 package resources
 
 import (
-  "encoding/yaml"
+  "path"
+  "strings"
+
   corev1 "k8s.io/api/core/v1"
+  kustomization "kustomize.toolkit.fluxcd.io/kustomization/v1"
+  ocirepository "source.toolkit.fluxcd.io/ocirepository/v1beta2"
 )
+
+applicationDir: string & strings.MinRunes(1) @tag(applicationDir)
+applicationName: path.Base(applicationDir)
 
 // Default namespace. Name defined in leaf directory
 #Namespace: corev1.#Namespace & {
@@ -33,25 +40,57 @@ import (
 
 // Cluster scoped resources should not have a namespace
 #ClusterResources: {
-  [Name=_]: {
+  [Name=!~"^(_|#)"]: {
     metadata: {
       namespace?: _|_
       name: string | *Name
+      ...
     }
+    ...
   }
 }
 // On namespaced resources, set the default namespace
 #Resources: {
-  [Name=_]: {
+  _namespace: #Namespace
+  [Name=!~"^(_|#)"]: {
     metadata: {
-      namespace: string | *#Namespace.metadata.name
+      namespace: string | *_namespace.metadata.name
       name: string | *Name
+      ...
     }
+    ...
   }
 }
 
-// Exported string of yaml documents
-resources: yaml.MarshalStream([
-  for _, r in #ClusterResources {r},
-  for _, r in #Resources {r},
-])
+#Manifest: {
+  _type: "manifest"
+  namespace: #Namespace
+  clusterResources: #ClusterResources
+  resources: #Resources & { _namespace: namespace }
+}
+
+manifests: {
+  [!~"^(_|#)"]: #Manifest
+}
+
+#Repository: {
+  apiVersion: ocirepository.#OCIRepository.apiVersion
+  kind: ocirepository.#OCIRepository.kind
+  metadata: {
+    name: "netserv-ghcr"
+    namespace: fluxResources._namespace.metadata.name
+  }
+}
+
+fluxResources: #Resources & {
+  _namespace: #Namespace & {_name: "flux-system"}
+  appKustomization: kustomization.#Kustomization & {
+    metadata: name: applicationName
+    spec: {
+      path: "./\(applicationDir)/manifests"
+      interval: _ | *"10m0s"
+      prune: _ | *true
+      sourceRef: #Ref & {_obj: #Repository}
+    }
+  }
+}
