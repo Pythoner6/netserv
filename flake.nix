@@ -104,6 +104,8 @@
         url = "https://github.com/kubernetes/ingress-nginx/releases/download/helm-chart-4.8.4/ingress-nginx-4.8.4.tgz";
         hash = "";
       };
+
+      charts = [external-secrets-chart-zip];
       #patch-gitea = pkgs.gitea.overrideAttrs (old: rec {
       #  patches = old.patches ++ [ ./patches/gitea-cockroach.patch ];
       #  version = "1.20.5";
@@ -273,6 +275,16 @@
             cp -a "${"$"}{gen[@]}" $out/
           '';
         };
+        helm-charts = pkgs.stdenv.mkDerivation {
+          name = "helm-charts";
+          phases = ["installPhase"];
+          installPhase = ''
+            mkdir $out
+            declare -a charts
+            charts=(${builtins.concatStringsSep " " charts})
+            cp -a "${"$"}{charts[@]}" $out/
+          '';
+        };
         test = pkgs.stdenv.mkDerivation {
           name = "test";
           buildInputs = [vendor-k8s flux-crds cert-manager-crds rook-crds external-secrets-crds];
@@ -312,6 +324,9 @@
         };
         push = pkgs.mkShell {
           buildInputs = with pkgs; [ skopeo ];
+        };
+        helm = pkgs.mkShell {
+          buildInputs = with pkgs; [ kubernetes-helm ];
         };
       };
     };

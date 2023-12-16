@@ -1,0 +1,26 @@
+name: Vendor Chart Dependencies
+run-name: vendor-charts
+on: [push]
+
+jobs:
+  Vendor-Charts:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v3
+      - name: Install Nix
+        uses: cachix/install-nix-action@v23
+        with:
+          nix_path: nixpkgs=channel:nixos-23.11
+      - name: 
+        run: nix build .#helm-charts
+      - name: Push to registry
+        env:
+          ACTOR: "${{ github.actor }}"
+          TOKEN: "${{ secrets.PACKAGE_PUBLISH_TOKEN }}"
+        run: |
+          export ACTOR=${ACTOR,,}
+          export TOKEN=$TOKEN
+          export REGISTRY=ghcr.io/$ACTOR/charts
+          #nix develop .#helm -c skopeo copy --dest-username "$ACTOR" --dest-password "$TOKEN" --dest-tls-verify oci:result/oci-image:latest "docker://ghcr.io/$ACTOR/netserv"
+          nix develop .#helm -c bash publish_charts.sh
