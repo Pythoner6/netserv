@@ -49,8 +49,7 @@ command: synth: {
   "create-flux-resources-yaml": file.Create & {
     filename: "\(outputDir)/flux-resources.yaml"
     contents: yaml.MarshalStream(list.Sort([for _, r in fluxResources {r}], {
-      x: _
-      y: _
+      x: _, y: _
       less: (#FluxResourceOrdering & { _obj: x }).order < (#FluxResourceOrdering & { _obj: y }).order
     }))
   }

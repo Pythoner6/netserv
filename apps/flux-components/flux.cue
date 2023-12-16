@@ -3,10 +3,11 @@ package netserv
 import (
   kustomization "kustomize.toolkit.fluxcd.io/kustomization/v1"
   ocirepository "source.toolkit.fluxcd.io/ocirepository/v1beta2"
+  helmrepository "source.toolkit.fluxcd.io/helmrepository/v1beta2"
 )
 
 fluxResources: {
-  repository: ocirepository.#OCIRepository & {
+  oci: ocirepository.#OCIRepository & {
     #Repository
     spec: {
       interval: "1m0s"
@@ -14,12 +15,18 @@ fluxResources: {
       url: "oci://ghcr.io/pythoner6/netserv"
     }
   }
+  helm: helmrepository.#HelmRepository & {
+    #HelmRepository
+    spec: {
+      url: "oci://ghcr.io/pythoner6/charts"
+    }
+  }
   "root": kustomization.#Kustomization & {
     spec: {
       path: "./"
       interval: "10m0s"
       prune: true
-      sourceRef: #Ref & {_obj: repository}
+      sourceRef: #Ref & {_obj: #Repository}
     }
   }
 }

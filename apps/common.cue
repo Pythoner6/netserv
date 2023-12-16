@@ -7,6 +7,7 @@ import (
   corev1 "k8s.io/api/core/v1"
   kustomization "kustomize.toolkit.fluxcd.io/kustomization/v1"
   ocirepository "source.toolkit.fluxcd.io/ocirepository/v1beta2"
+  helmrepository "source.toolkit.fluxcd.io/helmrepository/v1beta2"
 )
 
 applicationDir: string & strings.MinRunes(1) @tag(applicationDir)
@@ -76,6 +77,15 @@ manifests: {
 #Repository: {
   apiVersion: ocirepository.#OCIRepository.apiVersion
   kind: ocirepository.#OCIRepository.kind
+  metadata: {
+    name: "netserv-ghcr"
+    namespace: fluxResources._namespace.metadata.name
+  }
+}
+
+#HelmRepository: {
+  apiVersion: helmrepository.#HelmRepository.apiVersion
+  kind: helmrepository.#HelmRepository.kind
   metadata: {
     name: "netserv-ghcr"
     namespace: fluxResources._namespace.metadata.name
