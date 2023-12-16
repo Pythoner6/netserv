@@ -10,239 +10,82 @@
       src = ./.;
       pkgs = nixpkgs.legacyPackages.${system};
       pkgs-unstable = nixpkgs-unstable.legacyPackages.${system};
+      lib = pkgs.lib;
 
       kube-version = "v1.29.0";
 
-      flux = "${pkgs.fetchzip {
-        url = "https://github.com/fluxcd/flux2/releases/download/v2.2.0/flux_2.2.0_linux_amd64.tar.gz";
-        hash = "sha256-Qw6x2ljZtvOBXe2KiGbeEN1APDeGbWGT3/kE5JIMWNs=";
-      }}/flux";
-      metallb-chart = pkgs.fetchzip {
-        url = "https://github.com/metallb/metallb/releases/download/metallb-chart-0.13.12/metallb-0.13.12.tgz";
-        hash = "sha256-W+GcNyNLEH5fV00436PO8RTXDdWn1BttE/Y3JbaN41A=";
-      };
-      cert-manager-chart = pkgs.fetchzip {
-        url = "https://charts.jetstack.io/charts/cert-manager-v1.13.1.tgz";
-        hash = "sha256-wAHlpNAc0bXW4vL7ctK80RhkgY4iLCUIKFSqNPSTfRQ=";
-      };
-      cert-manager-chart-zip = pkgs.fetchurl {
-        url = "https://charts.jetstack.io/charts/cert-manager-v1.13.3.tgz";
-        hash = "sha256-8w8+b3Mn8XHssa1gB531VjmtZGmoDzLltgZnr5UEVdU=";
-      };
-      traefik-chart = pkgs.fetchzip {
-        url = "https://traefik.github.io/charts/traefik/traefik-25.0.0.tgz";
-        hash = "sha256-ua8KnUB6MxY7APqrrzaKKSOLwSjDYkk9tfVkb1bqkVM=";
-      };
-      rook-chart = pkgs.fetchzip {
-        url = "https://charts.rook.io/release/rook-ceph-v1.12.7.tgz";
-        hash = "sha256-Z/Y0EdN2Qu56HnO5uN8SOZA0rMTC91eqmn7NMwX+M4Q=";
-      };
-      rook-chart-zip = pkgs.fetchurl {
-        url = "https://charts.rook.io/release/rook-ceph-v1.12.9.tgz";
-        hash = "sha256-sA9rMy64a5WomstxCISojeXcmQuI56ZDrYCMRQ3cn1Y=";
-      };
-      external-secrets-chart = pkgs.fetchzip {
-        url = "https://github.com/external-secrets/external-secrets/releases/download/helm-chart-0.9.7/external-secrets-0.9.7.tgz";
-        hash = "sha256-uAprYgJ+iVSH+D0dR0nyUbna4hMi/Cpl9xHd/JNGkqM=";
-      };
-      external-secrets-chart-zip = pkgs.fetchurl {
-        url = "https://github.com/external-secrets/external-secrets/releases/download/helm-chart-0.9.9/external-secrets-0.9.9.tgz";
-        hash = "sha256-IH23aIHpWns5hOEsEsV/P4PGgr1zzkxjd/5960tLEMI=";
-      };
-      local-path-provisioner-chart = pkgs.stdenv.mkDerivation {
-        name = "local-path-provisioner-chart";
-        src = pkgs.fetchgit {
-          url = "https://github.com/rancher/local-path-provisioner.git";
-          rev = "v0.0.24";
-          nonConeMode = true;
-          sparseCheckout = [ "deploy/chart/local-path-provisioner" ];
-          hash = "sha256-AOcr3rVsjkvKY6SZjf0zZncX2Lh6dX3nfCF6UJ3Ayws=";
+      cue-nix = import ./cue.nix {inherit pkgs;};
+      timoni-nix = import ./timoni.nix {inherit pkgs kube-version;};
+
+      flux = pkgs.stdenv.mkDerivation {
+        name = "flux";
+        src = pkgs.fetchzip {
+          url = "https://github.com/fluxcd/flux2/releases/download/v2.2.0/flux_2.2.0_linux_amd64.tar.gz";
+          hash = "sha256-Qw6x2ljZtvOBXe2KiGbeEN1APDeGbWGT3/kE5JIMWNs=";
         };
-        buildPhase = "true";
-        installPhase = ''
-          cp -r deploy/chart/local-path-provisioner/ $out/
-        '';
-      };
-      weaveworks-gitops-chart = pkgs.stdenv.mkDerivation {
-        name = "weaveworks-gitops-chart";
-        src = pkgs.fetchgit {
-          url = "https://github.com/weaveworks/weave-gitops.git";
-          rev = "v0.35.0";
-          nonConeMode = true;
-          sparseCheckout = [ "charts/gitops-server" ];
-          hash = "sha256-uvooIZVUm9+ykxMZg8NoQxFXXLbDFFFgILz/fU5X/ug=";
-        };
-        buildPhase = "true";
-        installPhase = ''
-          cp -r charts/gitops-server/ $out/
-        '';
-      };
-      cockroachdb-manifest = pkgs.stdenv.mkDerivation {
-        name = "cockroachdb";
-        src = pkgs.fetchgit {
-          url = "https://github.com/cockroachdb/cockroach-operator.git";
-          rev = "v2.12.0";
-          nonConeMode = true;
-          sparseCheckout = [ "install" ];
-          hash = "sha256-UCgy6LknYQp4XFHftc0lKfdVGVIWy0ioccAeFJAMc9k=";
-        };
-        patches = [ ./patches/crdb-enable-affinity.patch ];
-        buildPhase = "true";
-        installPhase = ''
-          cp -r install/. $out/
-        '';
-      };
-      gitea-chart = pkgs.fetchzip {
-        url = "https://dl.gitea.com/charts/gitea-9.5.1.tgz";
-        hash = "sha256-UYslC1WgnMP/Qk3wCVU/lBGl/QyBsBX+8zU40eyJUOo=";
-      };
-      gitea-chart-zip = pkgs.fetchurl {
-        url = "https://dl.gitea.com/charts/gitea-9.6.1.tgz";
-        hash = "sha256-gl+Vs6oQgZDg4TjMIy1aSkNLaIUvgXxfSzYYfiwJtlY=";
-      };
-      ingress-nginx-chart-zip = pkgs.fetchurl {
-        url = "https://github.com/kubernetes/ingress-nginx/releases/download/helm-chart-4.8.4/ingress-nginx-4.8.4.tgz";
-        hash = "";
+        installPhase = "set -e; mkdir -p $out/bin; cp $src/flux $out/bin";
       };
 
-      oci-chart = {name, src}: pkgs.stdenv.mkDerivation {
-        inherit name;
-        unpackPhase = "true";
+      charts = {
+        external-secrets = {
+          drv = pkgs.fetchurl {
+            url = "https://github.com/external-secrets/external-secrets/releases/download/helm-chart-0.9.9/external-secrets-0.9.9.tgz";
+            hash = "sha256-IH23aIHpWns5hOEsEsV/P4PGgr1zzkxjd/5960tLEMI=";
+          };
+          crd-enable-key = "installCRDs";
+        };
+        cert-manager = {
+          drv = pkgs.fetchurl {
+            url = "https://charts.jetstack.io/charts/cert-manager-v1.13.3.tgz";
+            hash = "sha256-8w8+b3Mn8XHssa1gB531VjmtZGmoDzLltgZnr5UEVdU=";
+          };
+          crd-enable-key = "installCRDs";
+        };
+        rook = {
+          drv = pkgs.fetchurl {
+            url = "https://charts.rook.io/release/rook-ceph-v1.13.0.tgz";
+            hash = "sha256-MgB79G9D8TArYezjqYFHcpNYU7vXTTL5kdREOWaiub8=";
+          };
+          crd-enable-key = "crds.enable";
+        };
+        gitea = {
+          drv = pkgs.fetchurl {
+            url = "https://dl.gitea.com/charts/gitea-9.6.1.tgz";
+            hash = "sha256-gl+Vs6oQgZDg4TjMIy1aSkNLaIUvgXxfSzYYfiwJtlY=";
+          };
+        };
+        ingress-nginx = {
+          drv = pkgs.fetchurl {
+            url = "https://github.com/kubernetes/ingress-nginx/releases/download/helm-chart-4.8.4/ingress-nginx-4.8.4.tgz";
+            hash = "sha256-GBF0oU2cwCJ0eyyY8OgG2SGwBEFwTacqWoXegWyKCPs=";
+          };
+        };
+      };
+
+      crd-enable-key = chart: if builtins.hasAttr "crd-enable-key" chart then chart.crd-enable-key else "";
+      chart-crds = builtins.mapAttrs (name: chart: timoni-nix.vendor-chart-crds name chart.drv (crd-enable-key chart)) charts;
+      chart-oci-artifacts = builtins.mapAttrs (name: chart: oci-chart name chart.drv) charts;
+
+      flux-manifests = pkgs.stdenv.mkDerivation {
+        name = "flux-manifests";
+        dontUnpack = true;
+        buildInputs = [flux];
+        installPhase = "flux install --export > $out";
+      };
+
+      flux-crds = timoni-nix.vendor-crds "flux-crds" flux-manifests;
+
+      oci-chart = name: src: pkgs.stdenv.mkDerivation {
+        inherit name src;
+        dontUnpack = true;
         buildInputs = with pkgs; [ kubernetes-helm yq-go jq ];
-        installPhase = let 
-          config-media-type = "application/vnd.cncf.helm.config.v1+json";
-          layer-media-type = "application/vnd.cncf.helm.chart.content.v1.tar+gzip";
-          manifest-media-type = "application/vnd.oci.image.manifest.v1+json";
-          annot-prefix = "org.opencontainers.image";
-        in ''
-          set -eo pipefail
-          mkdir -p $out/blobs/sha256
-          function sha() {
-            sha256sum "$1" | cut -f1 -d' '
-          }
-          function len() {
-            wc -c "$1" | cut -f1 -d' '
-          }
-
-          chartsha=$(sha "${src}")
-          chartlen=$(len "${src}")
-          cp "${src}" "$out/blobs/sha256/$chartsha"
-
-          config="$(mktemp)"
-          helm show chart "${src}" | yq -o json | jq -c > "$config"
-          configsha="$(sha "$config")"
-          configlen="$(len "$config")"
-          configcontent="$(cat "$config")"
-          cp "$config" "$out/blobs/sha256/$configsha"
-
-          manifest="$(mktemp)"
-          declare -a args
-          args=(
-            --arg configsha "$configsha"
-            --argjson configlen "$configlen"
-            --arg chartsha "$chartsha"
-            --argjson chartlen "$chartlen"
-            --argjson config "$(cat "$config")"
-            --arg date "$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
-          )
-          jq -n -c "${"$"}{args[@]}" "$(cat <<'EOF'
-          {
-            schemaVersion: 2,
-            config: {
-              mediaType: "${config-media-type}",
-              digest: ("sha256:"+$configsha),
-              size: $configlen
-            },
-            layers: [{
-              mediaType: "${layer-media-type}",
-              digest: ("sha256:"+$chartsha),
-              size: $chartlen
-            }],
-            annotations: {
-              "${annot-prefix}.authors": $config.maintainers | map(.name + " (" + .email + ")") | join(", "),
-              "${annot-prefix}.created": $date,
-              "${annot-prefix}.description": $config.description,
-              "${annot-prefix}.title": $config.name,
-              "${annot-prefix}.url": $config.home,
-              "${annot-prefix}.version": $config.version
-            }
-          }
-          EOF
-          )" > "$manifest"
-          manifestsha="$(sha "$manifest")"
-          manifestlen="$(len "$manifest")"
-          mv "$manifest" "$out/blobs/sha256/$manifestsha"
-
-          index="$(mktemp)"
-          args=(
-            --arg manifestsha "$manifestsha"
-            --argjson manifestlen "$manifestlen"
-          )
-          jq -n -c "${"$"}{args[@]}" "$(cat <<'EOF'
-          {
-            schemaVersion: 2,
-            manifests: [{
-              mediaType: "${manifest-media-type}",
-              digest: ("sha256:" + $manifestsha),
-              size: $manifestlen
-            }]
-          }
-          EOF
-          )" > "$index"
-          mv "$index" "$out/index.json"
-          echo '{"imageLayoutVersion":"1.0.0"}' > "$out/oci-layout"
-        '';
+        installPhase = "${./scripts/build_chart_oci.sh} $src";
       };
 
-      charts = [external-secrets-chart-zip];
-      #patch-gitea = pkgs.gitea.overrideAttrs (old: rec {
-      #  patches = old.patches ++ [ ./patches/gitea-cockroach.patch ];
-      #  version = "1.20.5";
-      #  src = pkgs.fetchurl {
-      #    url = "https://dl.gitea.com/gitea/${version}/gitea-src-${version}.tar.gz";
-      #    hash = "sha256-cH/AHsFXOdvfSfj9AZUd3l/RlYE06o1ByZu0vvGQuXw=";
-      #  };
-      #  buildPhase = old.buildPhase + ''
-      #    go build contrib/environment-to-ini/environment-to-ini.go
-      #  '';
-      #  postInstall = old.postInstall + ''
-      #    cp ./environment-to-ini $out/bin/environment-to-ini
-      #  '';
-      #});
-      vendorCRDs = {name, src}: pkgs.stdenv.mkDerivation {
-        inherit name;
-        unpackPhase = "true";
-        buildInputs = with pkgs; [ kubernetes-helm timoni yq-go ];
-        installPhase = ''
-          mkdir $out
-          mkdir cue.mod
-          timoni mod vendor crd -f ${src}
-          cp -a cue.mod/gen/. $out
-        '';
-      };
-      vendorChartCRDs = {name, chart, key ? ""}: pkgs.stdenv.mkDerivation {
-        inherit name;
-        unpackPhase = "true";
-        buildInputs = with pkgs; [ kubernetes-helm timoni yq-go ];
-        installPhase = ''
-          mkdir $out
-          mkdir cue.mod
-          if [[ ! -z "${key}" ]]; then
-            enableCRD="--set ${key}=true"
-          fi
-          helm template "${chart}" --include-crds --kube-version ${kube-version} $enableCRD | tee rendered.yaml >/dev/null
-          yq -i 'select(.kind == "CustomResourceDefinition")' rendered.yaml
-          if [[ "${chart}" == "${rook-chart-zip}" ]]; then
-            yq -i 'with(select(.metadata.name == "objectbuckets.objectbucket.io").spec.versions[].schema.openAPIV3Schema.properties.spec.properties.authentication; del(.))' rendered.yaml
-          fi
-          timoni mod vendor crd -f rendered.yaml
-          cp -a cue.mod/gen/. $out
-        '';
-      };
-      buildImage = {name, src}: pkgs.stdenv.mkDerivation {
+      oci-image = {name, src}: pkgs.stdenv.mkDerivation {
         inherit name;
         inherit src;
-        nativeBuildInputs = with pkgs; [ umoci ];
+        nativeBuildInputs = [ pkgs.umoci ];
         installPhase = ''
           unpacked=$(mktemp -d)
           umoci init --layout $out
@@ -255,149 +98,36 @@
       };
     in {
       packages.${system} = rec {
-        deps = pkgs.buildNpmPackage rec {
-          name = "netserv-deps";
-          pname = "netserv-deps";
-          src = ./deps;
-          npmDepsHash = "sha256-HSBAyeJNT6HFvRtsEGFyWX+hDmgbJ2+4k9J9CXe9bAw=";
-          nativeBuildInputs = with pkgs; [ yq-go kubernetes-helm nodejs nodePackages.npm typescript ];
-          makeCacheWritable = true;
-          npmBuildFlags = [
-            "--metallb=${metallb-chart}" 
-            "--traefik=${traefik-chart}" 
-            "--rook=${rook-chart}" 
-            "--external-secrets=${external-secrets-chart}" 
-            "--local-path-provisioner=${local-path-provisioner-chart}" 
-            "--cockroachdb=${cockroachdb-manifest}"
-            "--certmanager=${cert-manager-chart}"
-          ];
-          postBuild = ''
-            npm pack
-          '';
-          installPhase = ''
-            cp pythoner6-netserv-deps-0.0.0.tgz $out
-          '';
-        };
-        default = pkgs.buildNpmPackage rec {
-          name = "netserv-main";
-          pname = "netserv-main";
-          src = ./main;
-          npmDepsHash = "sha256-sWj3KBuxqq1StZ4XuQscpe3zy33YT8VLFKasq1zWyOU=";
-          nativeBuildInputs = with pkgs; [ yq-go kubernetes-helm nodejs nodePackages.npm typescript umoci ];
-          makeCacheWritable = true;
-          npmBuildFlags = [
-            "--gitea=${gitea-chart}"
-            "--gitops=${weaveworks-gitops-chart}"
-          ];
-          preBuild = ''
-            ln -s ${deps} deps.tgz
-            npm i deps.tgz
-          '';
-          installPhase = ''
-            mkdir -p $out/apps
-            for dir in dist node_modules/@pythoner6/netserv-deps/dist; do
-              IFS=$'\n'
-              for chart in $(find $dir -type f); do
-                n="$(basename --suffix=.k8s.yaml "$chart")"
-                mkdir -p "$out/apps/$n/manifests"
-                cp "$chart" "$out/apps/$n/manifests/$n.yaml"
-                cp kustomization.yaml "$out/apps/$n/"
-                cat flux.yaml | sed "s/{{NAME}}/$n/" > "$out/apps/$n/flux.yaml"
-              done
-            done
-            cp -a flux-system $out/apps
-            umoci init --layout $out/oci-image
-            umoci new --image $out/oci-image:latest
-            umoci unpack --uid-map 0:$(id -u) --gid-map 0:$(id -g) --image $out/oci-image:latest bundle
-            cp -a $out/apps/flux-system bundle/rootfs
-            #cp -a $out/apps/weaveworks-gitops bundle/rootfs
-            umoci repack --image $out/oci-image:latest bundle
-          '';
-        };
-        flux-manifests = pkgs.stdenv.mkDerivation {
-          name = "flux-manifests";
-          unpackPhase = "true";
-          installPhase = ''
-            ${flux} install --export > $out
-          '';
-        };
-        flux-crds = vendorCRDs {
-          name = "flux-crds";
-          src = flux-manifests;
-        };
-        cert-manager-crds = vendorChartCRDs {
-          name = "cert-manager-crds";
-          chart = cert-manager-chart-zip;
-          key = "installCRDs";
-        };
-        rook-crds = vendorChartCRDs {
-          name = "rook-crds";
-          chart = rook-chart-zip;
-          key = "crds.enabled";
-        };
-        external-secrets-crds = vendorChartCRDs {
-          name = "external-secrets-crds";
-          chart = external-secrets-chart-zip;
-          key = "installCRDs";
-        };
-        vendor-k8s = pkgs.buildGoModule {
-          name = "vendor-k8s";
-          src = ./cue-k8s-go;
-          nativeBuildInputs = with pkgs; [ cue ];
-          vendorHash = "sha256-M0zdXmTfyykNtzkQu1D/+DWAoeOWOpLS7Qy6UFT6/Ns=";
-          buildPhase = ''
-            cue get go k8s.io/api/...
-            cue get go k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1
-          '';
-          installPhase = ''
-            mkdir $out
-            cp -a cue.mod/gen/. $out
-          '';
-        };
         crds = pkgs.stdenv.mkDerivation {
           name = "crds";
-          buildInputs = [vendor-k8s flux-crds cert-manager-crds rook-crds external-secrets-crds];
           unpackPhase = "true";
           configurePhase = ''
             mkdir $out
-            IFS=$'\n'; readarray -t gen <<<"$(unset IFS; find $buildInputs -maxdepth 1 -mindepth 1 -type d)"
+            declare -a drvs
+            drvs=(${cue-nix.vendor-k8s kube-version} ${flux-crds} ${builtins.concatStringsSep " " (builtins.attrValues chart-crds)})
+            IFS=$'\n'; readarray -t gen <<<"$(unset IFS; find "${"$"}{drvs[@]}" -maxdepth 1 -mindepth 1 -type d)"
             cp -a "${"$"}{gen[@]}" $out/
           '';
         };
-        helm-charts = pkgs.stdenv.mkDerivation {
-          name = "helm-charts";
-          phases = ["installPhase"];
-          installPhase = ''
-            mkdir $out
-            declare -a charts
-            charts=(${builtins.concatStringsSep " " charts})
-            cp -a "${"$"}{charts[@]}" $out/
-          '';
-        };
-        oci-helm-es = oci-chart {
-          name = "oci-es";
-          src = external-secrets-chart-zip;
-        };
-        test = pkgs.stdenv.mkDerivation {
+        default = pkgs.stdenv.mkDerivation {
           name = "test";
-          buildInputs = [vendor-k8s flux-crds cert-manager-crds rook-crds external-secrets-crds];
           nativeBuildInputs = with pkgs; [ pkgs-unstable.cue jq kubernetes-helm ];
           src = ./.;
           configurePhase = ''
             mkdir cue.mod/gen/
-            IFS=$'\n'; readarray -t gen <<<"$(unset IFS; find $buildInputs -maxdepth 1 -mindepth 1 -type d)"
+            IFS=$'\n'; readarray -t gen <<<"$(unset IFS; find ${crds} -maxdepth 1 -mindepth 1 -type d)"
             ln -s "${"$"}{gen[@]}" cue.mod/gen/
           '';
           buildPhase = "true";
-          installPhase = ''
+          installPhase = let 
+            chartList = map (chart: chart.drv) (builtins.attrValues charts);
+            join = builtins.concatStringsSep;
+          in ''
             set -e
             IFS=$'\n'; readarray -t apps <<<"$(find ./apps/ -maxdepth 1 -mindepth 1 -type d -printf '%f\n')"
 
             chartsFile=$(mktemp)
-            for chart in ${external-secrets-chart-zip}; do
-              echo "---" >> "$chartsFile"
-              helm show chart "$chart" >> "$chartsFile"
-            done
+            ${join "; " (map (c: ''echo "---" >> "$chartsFile"; helm show chart "${c}" >> "$chartsFile"'') chartList)}
             charts="$(cat $chartsFile)"
             for app in "${"$"}{apps[@]}"; do
               mkdir -p $out/$app/manifests
@@ -418,9 +148,26 @@
             done
           '';
         };
-        test-img = buildImage {
-          name = "test-img";
-          src = test;
+        oci = oci-image {
+          name = "oci";
+          src = default;
+        };
+        chart-oci = pkgs.stdenv.mkDerivation {
+          name = "chart-oci";
+          srcs = builtins.attrValues chart-oci-artifacts;
+          buildInputs = [pkgs.jq];
+          dontUnpack = true;
+          installPhase = ''
+            mkdir $out
+            for oci in $srcs; do
+              manifest_digest="$(jq -r '.manifests[0].digest | sub("sha256:";"")' "$oci/index.json")"
+              manifest="$oci/blobs/$(jq -r '.manifests[0].digest | sub(":";"/")' "$oci/index.json")"
+              config="$oci/blobs/$(jq -r '.config.digest | sub(":";"/")' "$manifest")"
+              name="$(jq -r '.name' "$config")"
+              mkdir "$out/$name"
+              cp -a "$oci/" "$out/$name/$manifest_digest"
+            done
+          '';
         };
       };
       devShells.${system} = {

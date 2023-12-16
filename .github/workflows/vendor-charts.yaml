@@ -13,7 +13,7 @@ jobs:
         with:
           nix_path: nixpkgs=channel:nixos-23.11
       - name: 
-        run: nix build .#helm-charts
+        run: nix build .#chart-oci
       - name: Push to registry
         env:
           ACTOR: "${{ github.actor }}"
@@ -22,5 +22,4 @@ jobs:
           export ACTOR=${ACTOR,,}
           export TOKEN=$TOKEN
           export REGISTRY=ghcr.io/$ACTOR/charts
-          #nix develop .#helm -c skopeo copy --dest-username "$ACTOR" --dest-password "$TOKEN" --dest-tls-verify oci:result/oci-image:latest "docker://ghcr.io/$ACTOR/netserv"
-          nix develop .#helm -c bash publish_charts.sh
+          nix develop .#helm -c bash ./scripts/publish_charts.sh
