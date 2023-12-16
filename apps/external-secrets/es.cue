@@ -6,9 +6,7 @@ import (
 
 manifests: "helmrelease.yaml": {
   namespace: #Namespace & {_name: "external-secrets"}
-  clusterResources: {
-    ns: namespace
-  }
+  clusterResources: ns: namespace
   resources: {
     "external-secrets": helmrelease.#HelmRelease & {
       spec: {
