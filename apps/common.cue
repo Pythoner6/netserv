@@ -3,6 +3,7 @@ package netserv
 import (
   "path"
   "strings"
+  "encoding/yaml"
 
   corev1 "k8s.io/api/core/v1"
   kustomization "kustomize.toolkit.fluxcd.io/kustomization/v1"
@@ -12,6 +13,17 @@ import (
 
 applicationDir: string & strings.MinRunes(1) @tag(applicationDir)
 applicationName: path.Base(applicationDir)
+charts: string @tag(charts)
+
+#Charts: {
+  for chart in yaml.UnmarshalStream(charts) & [...{name: string, version: string}] {
+    "\(chart.name)": {
+      "chart": chart.name
+      version: chart.version
+      sourceRef: #Ref & {_obj: #HelmRepository}
+    }
+  }
+}
 
 // Default namespace. Name defined in leaf directory
 #Namespace: corev1.#Namespace & {
@@ -64,7 +76,6 @@ applicationName: path.Base(applicationDir)
 }
 
 #Manifest: {
-  _type: "manifest"
   namespace: #Namespace
   clusterResources: #ClusterResources
   resources: #Resources & { _namespace: namespace }

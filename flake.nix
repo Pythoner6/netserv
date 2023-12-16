@@ -105,6 +105,95 @@
         hash = "";
       };
 
+      oci-chart = {name, src}: pkgs.stdenv.mkDerivation {
+        inherit name;
+        unpackPhase = "true";
+        buildInputs = with pkgs; [ kubernetes-helm yq-go jq ];
+        installPhase = let 
+          config-media-type = "application/vnd.cncf.helm.config.v1+json";
+          layer-media-type = "application/vnd.cncf.helm.chart.content.v1.tar+gzip";
+          manifest-media-type = "application/vnd.oci.image.manifest.v1+json";
+          annot-prefix = "org.opencontainers.image";
+        in ''
+          set -eo pipefail
+          mkdir -p $out/blobs/sha256
+          function sha() {
+            sha256sum "$1" | cut -f1 -d' '
+          }
+          function len() {
+            wc -c "$1" | cut -f1 -d' '
+          }
+
+          chartsha=$(sha "${src}")
+          chartlen=$(len "${src}")
+          cp "${src}" "$out/blobs/sha256/$chartsha"
+
+          config="$(mktemp)"
+          helm show chart "${src}" | yq -o json | jq -c > "$config"
+          configsha="$(sha "$config")"
+          configlen="$(len "$config")"
+          configcontent="$(cat "$config")"
+          cp "$config" "$out/blobs/sha256/$configsha"
+
+          manifest="$(mktemp)"
+          declare -a args
+          args=(
+            --arg configsha "$configsha"
+            --argjson configlen "$configlen"
+            --arg chartsha "$chartsha"
+            --argjson chartlen "$chartlen"
+            --argjson config "$(cat "$config")"
+            --arg date "$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+          )
+          jq -n -c "${"$"}{args[@]}" "$(cat <<'EOF'
+          {
+            schemaVersion: 2,
+            config: {
+              mediaType: "${config-media-type}",
+              digest: ("sha256:"+$configsha),
+              size: $configlen
+            },
+            layers: [{
+              mediaType: "${layer-media-type}",
+              digest: ("sha256:"+$chartsha),
+              size: $chartlen
+            }],
+            annotations: {
+              "${annot-prefix}.authors": $config.maintainers | map(.name + " (" + .email + ")") | join(", "),
+              "${annot-prefix}.created": $date,
+              "${annot-prefix}.description": $config.description,
+              "${annot-prefix}.title": $config.name,
+              "${annot-prefix}.url": $config.home,
+              "${annot-prefix}.version": $config.version
+            }
+          }
+          EOF
+          )" > "$manifest"
+          manifestsha="$(sha "$manifest")"
+          manifestlen="$(len "$manifest")"
+          mv "$manifest" "$out/blobs/sha256/$manifestsha"
+
+          index="$(mktemp)"
+          args=(
+            --arg manifestsha "$manifestsha"
+            --argjson manifestlen "$manifestlen"
+          )
+          jq -n -c "${"$"}{args[@]}" "$(cat <<'EOF'
+          {
+            schemaVersion: 2,
+            manifests: [{
+              mediaType: "${manifest-media-type}",
+              digest: ("sha256:" + $manifestsha),
+              size: $manifestlen
+            }]
+          }
+          EOF
+          )" > "$index"
+          mv "$index" "$out/index.json"
+          echo '{"imageLayoutVersion":"1.0.0"}' > "$out/oci-layout"
+        '';
+      };
+
       charts = [external-secrets-chart-zip];
       #patch-gitea = pkgs.gitea.overrideAttrs (old: rec {
       #  patches = old.patches ++ [ ./patches/gitea-cockroach.patch ];
@@ -285,10 +374,14 @@
             cp -a "${"$"}{charts[@]}" $out/
           '';
         };
+        oci-helm-es = oci-chart {
+          name = "oci-es";
+          src = external-secrets-chart-zip;
+        };
         test = pkgs.stdenv.mkDerivation {
           name = "test";
           buildInputs = [vendor-k8s flux-crds cert-manager-crds rook-crds external-secrets-crds];
-          nativeBuildInputs = with pkgs; [ pkgs-unstable.cue ];
+          nativeBuildInputs = with pkgs; [ pkgs-unstable.cue jq kubernetes-helm ];
           src = ./.;
           configurePhase = ''
             mkdir cue.mod/gen/
@@ -297,13 +390,25 @@
           '';
           buildPhase = "true";
           installPhase = ''
+            set -e
             IFS=$'\n'; readarray -t apps <<<"$(find ./apps/ -maxdepth 1 -mindepth 1 -type d -printf '%f\n')"
+
+            chartsFile=$(mktemp)
+            for chart in ${external-secrets-chart-zip}; do
+              echo "---" >> "$chartsFile"
+              helm show chart "$chart" >> "$chartsFile"
+            done
+            charts="$(cat $chartsFile)"
             for app in "${"$"}{apps[@]}"; do
               mkdir -p $out/$app/manifests
               echo "$out/$app/"
               declare -a injections
               injections=(
                 --inject "applicationDir=$app"
+                --inject "charts=$charts"
+              )
+              cue vet -v -c "${"$"}{injections[@]}" ./apps/$app:netserv
+              injections+=(
                 --inject "outputDir=$out/$app"
               )
               if [[ "$app" == "flux-components" ]]; then
