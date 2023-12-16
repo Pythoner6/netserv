@@ -18,6 +18,7 @@ fluxResources: {
   helm: helmrepository.#HelmRepository & {
     #HelmRepository
     spec: {
+      type: "oci"
       url: "oci://ghcr.io/pythoner6/charts"
     }
   }
