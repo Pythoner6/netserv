@@ -12,9 +12,7 @@ manifests: "helmrelease.yaml": {
   resources: {
     "external-secrets": helmrelease.#HelmRelease & {
       spec: {
-        chart: spec: {
-          #Charts."external-secrets"
-        }
+        chart: spec: #Charts."external-secrets"
         interval: "10m0s"
       }
     }
