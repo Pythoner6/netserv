@@ -50,6 +50,20 @@ charts: string @tag(charts)
   }
   name: _obj.metadata.name
 }
+#DepRef: {
+  _obj: { 
+    metadata: {
+      name: string
+      namespace?: string
+      ...
+    }
+    ...
+  }
+  if _obj.metadata.namespace != _|_ {
+    namespace: _obj.metadata.namespace
+  }
+  name: _obj.metadata.name
+}
 
 // Cluster scoped resources should not have a namespace
 #ClusterResources: {

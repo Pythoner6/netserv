@@ -4,7 +4,7 @@ import (
   "tool/exec"
   "tool/file"
   "strings"
-  "path"
+  //"path"
   "list"
   "crypto/sha256"
   "encoding/hex"
@@ -62,7 +62,7 @@ command: synth: {
   for name, manifest in manifests {
     "create-file-\(hex.Encode(sha256.Sum256(name)))": file.Create & {
       $after: [mkdir]
-      filename: "\(_appDir)/manifests/\(name & path.Base(name))"
+      filename: "\(_appDir)/manifests/\(name)"
       contents: yaml.MarshalStream([
         for _, r in manifest.clusterResources {r},
         for _, r in manifest.resources {r},
