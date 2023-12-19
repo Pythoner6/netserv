@@ -12,7 +12,7 @@
 
       kubeVersion = "v1.29.0";
 
-      cue = import ./cue.nix {inherit pkgs kubeVersion;};
+      cue = import ./tools/cue.nix {inherit pkgs kubeVersion;};
 
       flux = pkgs.stdenv.mkDerivation {
         name = "flux";

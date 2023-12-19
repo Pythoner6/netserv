@@ -5,7 +5,7 @@ in {
     inherit name src;
     dontUnpack = true;
     buildInputs = with pkgs; [ kubernetes-helm yq-go jq ];
-    installPhase = "${./tools/scripts/build_chart_oci.sh}";
+    installPhase = "${./scripts/build_chart_oci.sh}";
   };
 
   image = {name, src}: pkgs.stdenv.mkDerivation {
@@ -23,6 +23,6 @@ in {
     #  umoci repack --no-history --image "$out" "$unpacked"
     #  umoci gc --layout "$out"
     #'';
-    installPhase = "${./tools/scripts/build_manifest_oci.sh}";
+    installPhase = "${./scripts/build_manifest_oci.sh}";
   };
 }

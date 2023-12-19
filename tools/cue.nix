@@ -9,7 +9,7 @@
 
   fromK8s = pkgs.buildGoModule {
     name = "vendor-k8s";
-    src = ./tools/k8s-defs + "/${kubeVersion}";
+    src = ./k8s-defs + "/${kubeVersion}";
     nativeBuildInputs = with pkgs; [ cue ];
     vendorHash = versions."${kubeVersion}";
     buildPhase = ''
@@ -27,7 +27,7 @@
     inherit (chart) src;
     dontUnpack = true;
     nativeBuildInputs = with pkgs; [ kubernetes-helm timoni yq-go ];
-    installPhase = "${./tools/scripts/vendor_chart_crds.sh} ${builtins.toJSON (builtins.toJSON (if chart ? "crdValues" then chart.crdValues else {}))} ${kubeVersion}";
+    installPhase = "${./scripts/vendor_chart_crds.sh} ${builtins.toJSON (builtins.toJSON (if chart ? "crdValues" then chart.crdValues else {}))} ${kubeVersion}";
   };
 
   synthApp = { name, src, appPath, chartIndex, cuePackageName, extraManifests, cueDefinitions }:
@@ -39,12 +39,12 @@
   in pkgs.stdenv.mkDerivation {
     inherit name src;
     nativeBuildInputs = with pkgs; [ cue jq ];
-    installPhase = "${./tools/scripts/synth.sh} <<< ${serialize inputs}";
+    installPhase = "${./scripts/synth.sh} <<< ${serialize inputs}";
   };
 in rec {
   #builder = pkgs.buildGoModule {
   #  name = "builder";
-  #  src = ./tools/builder;
+  #  src = ./builder;
   #  vendorHash = "sha256-Tq/zgsOdXms916ms1+Wa0MweKa0P7dn/0g0mvaGJV2Y=";
   #};
 
@@ -69,7 +69,7 @@ in rec {
       name = "chart-index";
       dontUnpack = true;
       nativeBuildInputs = [ pkgs.jq ];
-      installPhase = "${./tools/scripts/build_chart_index.sh} <<< ${serialize chartArtifacts}";
+      installPhase = "${./scripts/build_chart_index.sh} <<< ${serialize chartArtifacts}";
     };
   };
 
