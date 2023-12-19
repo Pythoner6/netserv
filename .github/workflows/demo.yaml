@@ -16,10 +16,12 @@ jobs:
         run: nix build .#ociImages
       - name: Push to registry
         env:
+          ACTOR: "${{ github.actor }}"
           BASE_URL: "ghcr.io/pythoner6"
           TOKEN: "${{ secrets.GITHUB_TOKEN }}"
-        shell: nix develop .#push {0}
+        shell: nix develop .#push -c bash {0}
         run: |
+          ACTOR=${ACTOR,,}
           source tools/scripts/oci_helpers.sh
           skopeo login -u "$ACTOR" --password-stdin <<< "$TOKEN" --tls-verify "$BASE_URL" 
           readarray -t charts <<< "$(find result/charts -maxdepth 1 -mindepth 1 -type d)"
