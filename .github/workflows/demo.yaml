@@ -13,11 +13,17 @@ jobs:
         with:
           nix_path: nixpkgs=channel:nixos-23.11
       - name: Build manifests
-        run: nix build .#oci
+        run: nix build .#ociImages
       - name: Push to registry
         env:
-          ACTOR: "${{ github.actor }}"
-          TOKEN: "${{ secrets.PACKAGE_PUBLISH_TOKEN }}"
+          BASE_URL: "ghcr.io/pythoner6"
+          TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+        shell: nix develop .#push {0}
         run: |
-          ACTOR=${ACTOR,,}
-          nix develop .#push -c skopeo copy --dest-username "$ACTOR" --dest-password "$TOKEN" --dest-tls-verify oci:result:latest "docker://ghcr.io/$ACTOR/netserv"
+          source tools/scripts/oci_helpers.sh
+          skopeo login -u "$ACTOR" --password-stdin <<< "$TOKEN" --tls-verify "$BASE_URL" 
+          readarray -t charts <<< "$(find result/charts -maxdepth 1 -mindepth 1 -type d)"
+          for chart in "${charts[@]}"; do
+            skopeo copy --dest-tls-verify "oci:$chart" "docker://$BASE_URL/charts/$(get_chart_name "$chart"):$(get_chart_digest "$chart")"
+          done
+          skopeo copy --dest-tls-verify oci:result/apps "docker://$BASE_URL/netserv"

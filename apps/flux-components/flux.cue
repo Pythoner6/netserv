@@ -6,6 +6,8 @@ import (
   helmrepository "source.toolkit.fluxcd.io/helmrepository/v1beta2"
 )
 
+appName: "flux-components"
+
 fluxResources: {
   oci: ocirepository.#OCIRepository & {
     #Repository

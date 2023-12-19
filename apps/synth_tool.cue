@@ -13,6 +13,7 @@ import (
 )
 
 outputDir: string & strings.MinRunes(1) @tag(outputDir)
+_appDir: "\(outputDir)/\(appName)"
 extraManifests: string | *null @tag(extraManifests)
 
 #FluxResourceOrdering: {
@@ -24,21 +25,24 @@ extraManifests: string | *null @tag(extraManifests)
 }
 
 command: synth: {
-  "create-manifests-dir": file.Mkdir & {
+  mkdir: file.Mkdir & {
     createParents: true
-    path: "\(outputDir)/manifests"
+    permissions: 0o777
+    path: "\(_appDir)/manifests"
   }
 
   if extraManifests != null {
       for output, input in json.Unmarshal(extraManifests) {
         "copy-extra-manifest-\(hex.Encode(sha256.Sum256(output)))": exec.Run & {
-          cmd: "cp \(input) \(outputDir)/manifests/\(output)"
+          $after: [mkdir]
+          cmd: ["cp", input, "\(_appDir)/manifests/\(output)"]
         }
       }
   }
 
-  "create-kustomization-yaml": file.Create & {
-    filename: "\(outputDir)/kustomization.yaml"
+  "create-kustomization-yaml": file.Append & {
+    $after: [mkdir]
+    filename: "\(_appDir)/kustomization.yaml"
     contents: yaml.Marshal({
       apiVersion: "kustomize.config.k8s.io/v1beta1"
       kind: "Kustomization"
@@ -47,7 +51,8 @@ command: synth: {
   }
 
   "create-flux-resources-yaml": file.Create & {
-    filename: "\(outputDir)/flux-resources.yaml"
+    $after: [mkdir]
+    filename: "\(_appDir)/flux-resources.yaml"
     contents: yaml.MarshalStream(list.Sort([for _, r in fluxResources {r}], {
       x: _, y: _
       less: (#FluxResourceOrdering & { _obj: x }).order < (#FluxResourceOrdering & { _obj: y }).order
@@ -56,7 +61,8 @@ command: synth: {
 
   for name, manifest in manifests {
     "create-file-\(hex.Encode(sha256.Sum256(name)))": file.Create & {
-      filename: "\(outputDir)/manifests/\(name & path.Base(name))"
+      $after: [mkdir]
+      filename: "\(_appDir)/manifests/\(name & path.Base(name))"
       contents: yaml.MarshalStream([
         for _, r in manifest.clusterResources {r},
         for _, r in manifest.resources {r},

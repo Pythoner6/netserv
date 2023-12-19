@@ -4,13 +4,15 @@ import (
   helmrelease "helm.toolkit.fluxcd.io/helmrelease/v2beta2"
 )
 
+appName: "external-secrets"
+
 manifests: "helmrelease.yaml": {
-  namespace: #Namespace & {_name: "external-secrets"}
+  namespace: #AppNamespace
   clusterResources: ns: namespace
   resources: {
-    "external-secrets": helmrelease.#HelmRelease & {
+    (appName): helmrelease.#HelmRelease & {
       spec: {
-        chart: spec: #Charts."external-secrets"
+        chart: spec: #Charts[appName]
         interval: "10m0s"
       }
     }

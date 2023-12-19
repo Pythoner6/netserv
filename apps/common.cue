@@ -1,8 +1,6 @@
 package netserv
 
 import (
-  "path"
-  "strings"
   "encoding/yaml"
 
   corev1 "k8s.io/api/core/v1"
@@ -11,15 +9,15 @@ import (
   helmrepository "source.toolkit.fluxcd.io/helmrepository/v1beta2"
 )
 
-applicationDir: string & strings.MinRunes(1) @tag(applicationDir)
-applicationName: path.Base(applicationDir)
+appName: string
 charts: string @tag(charts)
 
+
 #Charts: {
-  for chart in yaml.UnmarshalStream(charts) & [...{name: string, version: string}] {
-    "\(chart.name)": {
-      "chart": chart.name
-      version: chart.version
+  for name, tag in yaml.Unmarshal(charts) & {[_]: string} {
+    "\(name)": {
+      "chart": name
+      version: tag
       sourceRef: #Ref & {_obj: #HelmRepository}
     }
   }
@@ -30,6 +28,8 @@ charts: string @tag(charts)
   _name: string
   metadata: name: _name
 }
+
+#AppNamespace: #Namespace & {_name: appName}
 
 // Object reference helper
 #Ref: {
@@ -106,9 +106,9 @@ manifests: {
 fluxResources: #Resources & {
   _namespace: #Namespace & {_name: "flux-system"}
   appKustomization: kustomization.#Kustomization & {
-    metadata: name: applicationName
+    metadata: name: appName
     spec: {
-      path: "./\(applicationDir)/manifests"
+      path: "./\(appName)/manifests"
       interval: _ | *"10m0s"
       prune: _ | *true
       sourceRef: #Ref & {_obj: #Repository}

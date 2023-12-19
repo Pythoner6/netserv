@@ -1,15 +1,10 @@
-key="$1"
+values="$1"
 kube_version="$2"
 
 mkdir "$out"
 mkdir cue.mod
 
-declare -a enableCRD
-enableCRD=()
-if [[ ! -z "$key" ]]; then
-  enableCRD+=(--set "$key=true")
-fi
-helm template "$src" --include-crds --kube-version "$kube_version" "${enableCRD[@]}" | tee rendered.yaml >/dev/null
+helm template "$src" --include-crds --kube-version "$kube_version" --values <(echo "$values") | tee rendered.yaml >/dev/null
 
 # Only process CRDs
 yq -i 'select(.kind == "CustomResourceDefinition")' rendered.yaml

@@ -1,10 +1,7 @@
-set -eo pipefail
-
-src="$1"
-config_media_type="application/vnd.cncf.helm.config.v1+json";
-layer_media_type="application/vnd.cncf.helm.chart.content.v1.tar+gzip";
+set -euxo pipefail
+config_media_type="application/vnd.oci.image.config.v1+json";
+layer_media_type="application/vnd.oci.image.layer.v1.tar+gzip";
 manifest_media_type="application/vnd.oci.image.manifest.v1+json";
-annot_prefix="org.opencontainers.image";
 
 mkdir -p $out/blobs/sha256
 function sha() {
@@ -14,30 +11,56 @@ function len() {
   wc -c "$1" | cut -f1 -d' '
 }
 
-chartsha=$(sha "$src")
-chartlen=$(len "$src")
-cp "$src" "$out/blobs/sha256/$chartsha"
+layer_tar=$(mktemp)
+layer_gz=$(mktemp)
+tar_reproducible_flags=(
+  --sort=name --mtime="@1"
+  --owner=0 --group=0 --numeric-owner 
+  --pax-option=exthdr.name=%d/PaxHeaders/%f,delete=atime,delete=ctime
+)
+mkdir -p "$out/blobs/sha256"
+tar "${tar_reproducible_flags[@]}" -cf "$layer_tar" .
+diffid="$(sha256sum "$layer_tar" | cut -f1 -d' ')"
+gzip -c "$layer_tar" > "$layer_gz"
+rm "$layer_tar"
+layersha="$(sha "$layer_gz")"
+layerlen="$(len "$layer_gz")"
+mv "$layer_gz" "$out/blobs/sha256/$layersha"
 
 config="$(mktemp)"
-helm show chart "$src" | yq -o json | jq --sort-keys -c > "$config"
+declare -a args
+args=(
+  --arg date "$(date -d "@1" -u "+%Y-%m-%dT%H:%M:%SZ")"
+  --arg diffid "$diffid"
+)
+jq --sort-keys -n -c "${args[@]}" "$(cat <<'EOF'
+{
+  created: $date,
+  architecture: "amd64",
+  os: "linux",
+  config: {},
+  rootfs: {
+    type: "layers",
+    diff_ids: [ ("sha256:" + $diffid) ]
+  }
+}
+EOF
+)" > "$config"
 configsha="$(sha "$config")"
 configlen="$(len "$config")"
 configcontent="$(cat "$config")"
-cp "$config" "$out/blobs/sha256/$configsha"
+mv "$config" "$out/blobs/sha256/$configsha"
 
 manifest="$(mktemp)"
-declare -a args
 args=(
   --arg configsha "$configsha"
   --argjson configlen "$configlen"
-  --arg chartsha "$chartsha"
-  --argjson chartlen "$chartlen"
-  #--arg date "$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
-  --arg prefix "$annot_prefix"
+  --arg layersha "$layersha"
+  --argjson layerlen "$layerlen"
   --arg config_media_type "$config_media_type"
   --arg layer_media_type "$layer_media_type"
 )
-jq --sort-keys -c "${args[@]}" "$(cat <<'EOF'
+jq --sort-keys -n -c "${args[@]}" "$(cat <<'EOF'
 {
   schemaVersion: 2,
   config: {
@@ -47,19 +70,12 @@ jq --sort-keys -c "${args[@]}" "$(cat <<'EOF'
   },
   layers: [{
     mediaType: $layer_media_type,
-    digest: ("sha256:"+$chartsha),
-    size: $chartlen
+    digest: ("sha256:"+$layersha),
+    size: $layerlen
   }],
-  annotations: {
-    ($prefix+".authors"): (.maintainers // []) | map(.name + " (" + .email + ")") | join(", "),
-    ($prefix+".description"): .description,
-    ($prefix+".title"): .name,
-    ($prefix+".url"): .home,
-    ($prefix+".version"): .version
-  }
 }
 EOF
-)" "$config" > "$manifest"
+)" > "$manifest"
 manifestsha="$(sha "$manifest")"
 manifestlen="$(len "$manifest")"
 mv "$manifest" "$out/blobs/sha256/$manifestsha"
@@ -80,6 +96,7 @@ jq --sort-keys -n -c "${args[@]}" "$(cat <<'EOF'
   }]
 }
 EOF
-)" 2>&1 > "$index"
+)" > "$index"
 mv "$index" "$out/index.json"
 echo '{"imageLayoutVersion":"1.0.0"}' > "$out/oci-layout"
+set +x

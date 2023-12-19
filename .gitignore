@@ -7,4 +7,4 @@ dist-deps/
 .direnv
 result
 .ghtoken
-/cue.mod/gen
+cue.mod/gen
