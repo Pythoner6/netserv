@@ -15,7 +15,7 @@ jobs:
       - name: Build manifests
         run: nix build .#ociImages
       - name: Push to registry
-        if: github.ref == 'refs/head/main'
+        if: ${{ github.ref == 'refs/head/main' }}
         env:
           ACTOR: "${{ github.actor }}"
           BASE_URL: "ghcr.io/pythoner6"
