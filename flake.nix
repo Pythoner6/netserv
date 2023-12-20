@@ -33,9 +33,9 @@
       charts = cue.charts {
         external-secrets.crdValues."installCRDs" = true;
         external-secrets.src = pkgs.fetchurl {
-          # renovate: helmRepo=charts.external-secrets.io chart=external-secrets version=0.9.9
-          url = "https://github.com/external-secrets/external-secrets/releases/download/helm-chart-0.9.9/external-secrets-0.9.9.tgz";
-          hash = "sha256-IH23aIHpWns5hOEsEsV/P4PGgr1zzkxjd/5960tLEMI=";
+          # renovate: helmRepo=charts.external-secrets.io chart=external-secrets version=0.9.10
+          url = "https://github.com/external-secrets/external-secrets/releases/download/helm-chart-0.9.10/external-secrets-0.9.10.tgz";
+          hash = "sha256-PQzda4iAX5eAImAmaNd/FebP5wrPNLy9pHEBaMMQcwY=";
         };
         cert-manager.crdValues."installCRDs" = true;
         cert-manager.src = pkgs.fetchurl {
