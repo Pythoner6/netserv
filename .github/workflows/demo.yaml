@@ -26,6 +26,7 @@ jobs:
           TOKEN: "${{ secrets.GITHUB_TOKEN }}"
         shell: nix develop .#push -c bash {0}
         run: |
+          set -euo pipefail
           ACTOR=${ACTOR,,}
           source tools/scripts/oci_helpers.sh
           skopeo login -u "$ACTOR" --password-stdin <<< "$TOKEN" --tls-verify "$BASE_URL" 

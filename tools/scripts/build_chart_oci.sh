@@ -62,10 +62,15 @@ manifestlen="$(len "$manifest")"
 mv "$manifest" "$out/blobs/sha256/$manifestsha"
 
 index="$(mktemp)"
+version="$(jq -r '.version' "$config")"
+name="$(jq -r '.name' "$config")"
 args=(
   --arg manifestsha "$manifestsha"
   --argjson manifestlen "$manifestlen"
   --arg manifest_media_type "$manifest_media_type"
+  --arg prefix "$annot_prefix"
+  --arg version "${version#v}"
+  --arg name "$name"
 )
 jq --sort-keys -n -c "${args[@]}" "$(cat <<'EOF'
 {
@@ -73,7 +78,11 @@ jq --sort-keys -n -c "${args[@]}" "$(cat <<'EOF'
   manifests: [{
     mediaType: $manifest_media_type,
     digest: ("sha256:" + $manifestsha),
-    size: $manifestlen
+    size: $manifestlen,
+    annotations: {
+      ($prefix+".version"): $version,
+      ($prefix+".ref.name"): $name
+    }
   }]
 }
 EOF
