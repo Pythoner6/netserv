@@ -1,9 +1,9 @@
 get_chart_name() {
-  jq -r '.manifests[0].annotations["org.openconatiners.image.ref.name"]' "$1/index.json"
+  jq -r '.manifests[0].annotations["org.opencontainers.image.ref.name"]' "$1/index.json"
 }
 
 get_chart_version() {
-  jq -r '.manifests[0].annotations["org.openconatiners.image.version"]' "$1/index.json"
+  jq -r '.manifests[0].annotations["org.opencontainers.image.version"]' "$1/index.json"
 }
 
 get_chart_digest() {
