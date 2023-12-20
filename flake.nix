@@ -50,9 +50,9 @@
           hash = "sha256-MgB79G9D8TArYezjqYFHcpNYU7vXTTL5kdREOWaiub8=";
         };
         gitea.src = pkgs.fetchurl {
-          # renovate: helmRepo=dl.gitea.com/charts chart=gitea version=9.6.1
-          url = "https://dl.gitea.com/charts/gitea-9.6.1.tgz";
-          hash = "sha256-gl+Vs6oQgZDg4TjMIy1aSkNLaIUvgXxfSzYYfiwJtlY=";
+          # renovate: helmRepo=dl.gitea.com/charts chart=gitea version=10.0.0
+          url = "https://dl.gitea.com/charts/gitea-10.0.0.tgz";
+          hash = "sha256-/g93GkdEKhIHqBB8yrrAW6xvtjFIMqI9bhjtOwGoezc=";
         };
         ingress-nginx.src = pkgs.fetchurl {
           url = "https://github.com/kubernetes/ingress-nginx/releases/download/helm-chart-4.8.4/ingress-nginx-4.8.4.tgz";
