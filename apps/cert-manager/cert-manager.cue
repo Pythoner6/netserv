@@ -8,6 +8,7 @@ import (
 
 appName: "cert-manager"
 
+// TODO: add "manifest groups" -> kustomizations, automate that
 manifests: "../helmrelease.yaml": {
   namespace: #AppNamespace
   clusterResources: ns: namespace
