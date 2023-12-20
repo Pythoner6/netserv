@@ -2,5 +2,27 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "config:recommended"
-  ]
+  ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "fileMatch": ["^flake.nix$"],
+      "matchStrings": [
+        "#\\s+renovate:\\s+helmRepo=(?<registry>.*?) chart=(?<depName>.*?) version=(?<currentValue>.*?)\\s+url = \"(?<sourceUrl>[^\"]*)\";\\s+hash = \"(?<currentDigest>[^\"]*)\";"
+      ],
+      "registryUrlTemplate": "https://{{{registry}}}/index.yaml",
+      "datasourceTemplate": "custom.helmRepo"
+    }
+  ],
+  "customDatasources": {
+    "helmRepo": {
+      "format": "yaml",
+      "transformTemplates": [
+        "entries.\"{{packageName}}\"",
+        "($b64 := function($s,$a){ $length($s) = 0 ? $base64encode($eval(\"\\\"\" & $a & \"\\\"\")) : $b64($substring($s, 2), $a & \"\\\\u00\" & $substring($s, 0, 2)) }; $.{\"version\": version, \"digest\": \"sha256-\" & $b64(digest), \"sourceUrl\": urls[0]})",
+        "{\"releases\": $$}"
+      ]
+    }
+  },
+  "enabledManagers": ["regex"]
 }

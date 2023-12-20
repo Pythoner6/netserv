@@ -38,8 +38,9 @@
         };
         cert-manager.crdValues."installCRDs" = true;
         cert-manager.src = pkgs.fetchurl {
-          url = "https://charts.jetstack.io/charts/cert-manager-v1.13.3.tgz";
-          hash = "sha256-8w8+b3Mn8XHssa1gB531VjmtZGmoDzLltgZnr5UEVdU=";
+          # renovate: helmRepo=charts.jetstack.io chart=cert-manager version=v1.13.1
+          url = "https://charts.jetstack.io/charts/cert-manager-v1.13.1.tgz";
+          hash = "sha256-Dj2HHiZPo02rIltPFlc+LnxstERDAaRI/N6n846eBzg=";
         };
         rook.crdValues."crds.enable" = true;
         rook.src  = pkgs.fetchurl {
