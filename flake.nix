@@ -33,6 +33,7 @@
       charts = cue.charts {
         external-secrets.crdValues."installCRDs" = true;
         external-secrets.src = pkgs.fetchurl {
+          # renovate: helmRepo=charts.external-secrets.io chart=external-secrets version=0.9.9
           url = "https://github.com/external-secrets/external-secrets/releases/download/helm-chart-0.9.9/external-secrets-0.9.9.tgz";
           hash = "sha256-IH23aIHpWns5hOEsEsV/P4PGgr1zzkxjd/5960tLEMI=";
         };
@@ -44,10 +45,12 @@
         };
         rook.crdValues."crds.enable" = true;
         rook.src  = pkgs.fetchurl {
+          # renovate: helmRepo=charts.rook.io/release chart=rook-ceph version=v1.13.0
           url = "https://charts.rook.io/release/rook-ceph-v1.13.0.tgz";
           hash = "sha256-MgB79G9D8TArYezjqYFHcpNYU7vXTTL5kdREOWaiub8=";
         };
         gitea.src = pkgs.fetchurl {
+          # renovate: helmRepo=dl.gitea.com/charts chart=gitea version=9.6.1
           url = "https://dl.gitea.com/charts/gitea-9.6.1.tgz";
           hash = "sha256-gl+Vs6oQgZDg4TjMIy1aSkNLaIUvgXxfSzYYfiwJtlY=";
         };
