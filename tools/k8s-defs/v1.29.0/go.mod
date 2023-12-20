@@ -1,6 +1,6 @@
 module pythoner6.dev/netserv
 
-go 1.21.4
+go 1.21.5
 
 require (
 	k8s.io/api v0.29.0
