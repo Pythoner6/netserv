@@ -24,5 +24,6 @@
       ]
     }
   },
-  "enabledManagers": ["regex"]
+  "enabledManagers": ["regex"],
+  "prHourlyLimit": 10
 }
