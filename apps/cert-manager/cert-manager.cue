@@ -2,7 +2,6 @@ package netserv
 
 import (
   helmrelease "helm.toolkit.fluxcd.io/helmrelease/v2beta2"
-  //kustomization "kustomize.toolkit.fluxcd.io/kustomization/v1"
   clusterissuer "cert-manager.io/clusterissuer/v1"
 )
 
@@ -16,6 +15,7 @@ kustomizations: {
         spec: {
           chart: spec: #Charts[appName]
           interval: "10m0s"
+          values: installCRDs: true
         }
       }
     }
