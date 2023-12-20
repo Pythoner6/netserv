@@ -55,8 +55,8 @@
           hash = "sha256-/g93GkdEKhIHqBB8yrrAW6xvtjFIMqI9bhjtOwGoezc=";
         };
         ingress-nginx.src = pkgs.fetchurl {
-          url = "https://github.com/kubernetes/ingress-nginx/releases/download/helm-chart-4.8.4/ingress-nginx-4.8.4.tgz";
-          hash = "sha256-GBF0oU2cwCJ0eyyY8OgG2SGwBEFwTacqWoXegWyKCPs=";
+          url = "https://github.com/kubernetes/ingress-nginx/releases/download/helm-chart-4.8.3/ingress-nginx-4.8.3.tgz";
+          hash = "sha256-L4iBj1RE+AyBnWAgsGxhXjET1pJUn3ZedOwweeDA7k0=";
         };
       };
     in {
