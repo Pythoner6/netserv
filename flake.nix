@@ -45,9 +45,9 @@
         };
         rook.crdValues."crds.enable" = true;
         rook.src  = pkgs.fetchurl {
-          # renovate: helmRepo=charts.rook.io/release chart=rook-ceph version=v1.13.0
-          url = "https://charts.rook.io/release/rook-ceph-v1.13.0.tgz";
-          hash = "sha256-MgB79G9D8TArYezjqYFHcpNYU7vXTTL5kdREOWaiub8=";
+          # renovate: helmRepo=charts.rook.io/release chart=rook-ceph version=v1.13.1
+          url = "https://charts.rook.io/release/rook-ceph-v1.13.1.tgz";
+          hash = "sha256-76Ttrl2sneMSoe8jXAthanrlR3F5ATxN+Ga9bh1g4vo=";
         };
         gitea.src = pkgs.fetchurl {
           # renovate: helmRepo=dl.gitea.com/charts chart=gitea version=10.0.0
