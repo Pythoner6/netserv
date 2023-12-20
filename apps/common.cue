@@ -125,7 +125,7 @@ fluxResources: #Resources & {
         interval: _ | *"10m0s"
         prune: _ | *true
         sourceRef: #Ref & {_obj: #Repository}
-        dependsOn: [for dep in k._dependsOn {_#KustomizationMeta & {_k: k}}]
+        dependsOn: [for dep in k._dependsOn {_#KustomizationMeta & {_k: dep}}]
       }
     }
   }
