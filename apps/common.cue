@@ -11,7 +11,7 @@ import (
 
 appName: string
 charts: string @tag(charts)
-
+extraManifests: string | *null @tag(extraManifests)
 
 #Charts: {
   for name, tag in yaml.Unmarshal(charts) & {[_]: string} {
@@ -95,8 +95,40 @@ charts: string @tag(charts)
   resources: #Resources & { _namespace: namespace }
 }
 
-manifests: {
-  [!~"^(_|#)"]: #Manifest
+#Kustomization: {
+  _name: string
+  _namespace: string | *"flux-system"
+  _dependsOn: [...#Kustomization]
+  _extraManifests: { [string]: string }
+  [!~"^(_|#)"]: #Manifest & {namespace: _ | *#AppNamespace}
+}
+
+kustomizations: {
+  [Name=!~"^(_|#)"]: #Kustomization & { 
+    _name: _ | *Name
+  }
+}
+
+_#KustomizationMeta: {
+  _k: #Kustomization
+  name: [if _k._name == "$default" {appName}, "\(appName)-\(_k._name)"][0]
+  namespace: _k._namespace
+}
+
+fluxResources: #Resources & {
+  _namespace: #Namespace & {_name: "flux-system"}
+  for n, k in kustomizations {
+    (n): kustomization.#Kustomization & {
+      metadata: _#KustomizationMeta & {_k: k}
+      spec: {
+        path: "./\(appName)/\([if k._name == "$default" {"manifests"}, k._name][0])"
+        interval: _ | *"10m0s"
+        prune: _ | *true
+        sourceRef: #Ref & {_obj: #Repository}
+        dependsOn: [for dep in k._dependsOn {_#KustomizationMeta & {_k: k}}]
+      }
+    }
+  }
 }
 
 #Repository: {
@@ -113,19 +145,6 @@ manifests: {
   kind: helmrepository.#HelmRepository.kind
   metadata: {
     name: "netserv-ghcr"
-    namespace: fluxResources._namespace.metadata.name
-  }
-}
-
-fluxResources: #Resources & {
-  _namespace: #Namespace & {_name: "flux-system"}
-  appKustomization: kustomization.#Kustomization & {
-    metadata: name: appName
-    spec: {
-      path: "./\(appName)/manifests"
-      interval: _ | *"10m0s"
-      prune: _ | *true
-      sourceRef: #Ref & {_obj: #Repository}
-    }
+    namespace: #Kustomization._namespace
   }
 }

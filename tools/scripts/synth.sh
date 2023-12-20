@@ -15,10 +15,10 @@ package="${input[path]}:${input[cuePackageName]}"
 declare -a args=(
   --inject "charts=$(cat "${input[chartIndex]}")"
 )
-cue vet -v -c "${args[@]}" "./$package"
-args+=(--inject "outputDir=$out")
 if [[ "${input[extraManifests]}" != "null" ]]; then
   args+=(--inject "extraManifests=${input[extraManifests]}")
 fi
+cue vet -v -c "${args[@]}" "./$package"
+args+=(--inject "outputDir=$out")
 cue cmd -v "${args[@]}" synth "./$package"
 set +x

@@ -6,9 +6,8 @@ import (
 
 appName: "external-secrets"
 
-manifests: "helmrelease.yaml": {
-  namespace: #AppNamespace
-  clusterResources: ns: namespace
+kustomizations: helm: "helmrelease.yaml": {
+  clusterResources: ns: #AppNamespace
   resources: {
     (appName): helmrelease.#HelmRelease & {
       spec: {
