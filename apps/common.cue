@@ -126,6 +126,7 @@ fluxResources: #Resources & {
         prune: _ | *true
         sourceRef: #Ref & {_obj: #Repository}
         dependsOn: [for dep in k._dependsOn {_#KustomizationMeta & {_k: dep}}]
+        wait: _ | *true
       }
     }
   }
