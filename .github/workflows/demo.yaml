@@ -31,6 +31,6 @@ jobs:
           skopeo login -u "$ACTOR" --password-stdin <<< "$TOKEN" --tls-verify "$BASE_URL" 
           readarray -t charts <<< "$(find result/charts -maxdepth 1 -mindepth 1 -type d)"
           for chart in "${charts[@]}"; do
-            skopeo copy --dest-tls-verify "oci:$chart" "docker://$BASE_URL/charts/$(get_chart_name "$chart"):$(get_chart_digest "$chart")"
+            skopeo copy --dest-tls-verify "oci:$chart" "docker://$BASE_URL/charts/$(get_chart_name "$chart"):$(get_chart_version "$chart")"
           done
           skopeo copy --dest-tls-verify oci:result/apps "docker://$BASE_URL/netserv"
