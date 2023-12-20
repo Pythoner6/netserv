@@ -1,6 +1,10 @@
 name: Build Container Image
 run-name: nix-build
-on: [push]
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: ['**']
 
 jobs:
   Build-Container-Image:
@@ -15,7 +19,7 @@ jobs:
       - name: Build manifests
         run: nix build .#ociImages
       - name: Push to registry
-        if: ${{ github.ref == 'refs/head/main' }}
+        if: ${{ github.ref == 'refs/heads/main' }}
         env:
           ACTOR: "${{ github.actor }}"
           BASE_URL: "ghcr.io/pythoner6"
