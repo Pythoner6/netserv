@@ -14,7 +14,11 @@ kustomizations: helm: "manifest.yaml": {
         chart: spec: #Charts[appName]
         interval: "10m0s"
         values: {
-          hubble: tls: auto: method: "cronjob"
+          hubble: {
+            tls: auto: method: "cronjob"
+            relay: enabled: true
+            ui: enabled: true
+          }
           clustermesh: apiserver: tls: auto: method: "cronjob"
           ipam: mode: "kubernetes"
           kubeProxyReplacement: true
