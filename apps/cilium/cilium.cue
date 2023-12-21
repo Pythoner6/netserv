@@ -15,11 +15,11 @@ kustomizations: helm: "manifest.yaml": {
         interval: "10m0s"
         values: {
           hubble: {
-            tls: auto: method: "cronjob"
+            tls: auto: method: "cronJob"
             relay: enabled: true
             ui: enabled: true
           }
-          clustermesh: apiserver: tls: auto: method: "cronjob"
+          clustermesh: apiserver: tls: auto: method: "cronJob"
           ipam: mode: "kubernetes"
           kubeProxyReplacement: true
           securityContext: capabilities: {
