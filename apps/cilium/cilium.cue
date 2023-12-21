@@ -14,6 +14,7 @@ kustomizations: helm: "manifest.yaml": {
         chart: spec: #Charts[appName]
         interval: "10m0s"
         values: {
+          bgpControlPlane: enabled: true
           hubble: {
             tls: auto: method: "cronJob"
             relay: enabled: true
