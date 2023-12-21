@@ -31,6 +31,11 @@
       };
 
       charts = cue.charts {
+        cilium.src = pkgs.fetchurl {
+          # renovate: helmRepo=helm.cilium.io chart=cilium version=1.14.5
+          url = "https://helm.cilium.io/cilium-1.14.5.tgz";
+          hash = "sha256-f9FIo0bDr0IZ6GZay1YXzgZkfDqkH+24vN6SxnjpGsU=";
+        };
         external-secrets.crdValues."installCRDs" = true;
         external-secrets.src = pkgs.fetchurl {
           # renovate: helmRepo=charts.external-secrets.io chart=external-secrets version=0.9.10
