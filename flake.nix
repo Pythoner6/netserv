@@ -48,8 +48,8 @@
       };
 
       gateway-crds = pkgs.fetchurl {
-        url = "https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.0.0/standard-install.yaml";
-        hash = "sha256-I+ThCVxyoFh0dPf7P4XDGc3sd6CDq5Ejf/vewfGDTSo=";
+        url = "https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.0.0/experimental-install.yaml";
+        hash = "sha256-bGAdzteHKpQNdvpmeuEmunGMtMbblw0Lq0kSjswRkqM=";
       };
 
       charts = cue.charts {
