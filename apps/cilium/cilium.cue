@@ -1,6 +1,8 @@
 package netserv
 
 import (
+  "encoding/yaml"
+
   helmrelease "helm.toolkit.fluxcd.io/helmrelease/v2beta2"
   bgppolicy   "cilium.io/ciliumbgppeeringpolicy/v2alpha1"
   ippool      "cilium.io/ciliumloadbalancerippool/v2alpha1"
@@ -8,6 +10,11 @@ import (
 
 appName: "cilium"
 
+kustomizations: "gateway-crds": {
+  _extraManifests: yaml.Unmarshal(extraManifests)
+}
+
+kustomizations: helm: _dependsOn: [kustomizations."gateway-crds"]
 kustomizations: helm: "manifest.yaml": {
   resources: {
     (appName): helmrelease.#HelmRelease & {
@@ -26,6 +33,7 @@ kustomizations: helm: "manifest.yaml": {
           ipam: mode: "kubernetes"
           kubeProxyReplacement: true
           l7Proxy: true
+          gatewayAPI: enabled: true
           rolloutCiliumPods: true
           operator: rolloutPods: true
           ingressController: {
@@ -56,7 +64,7 @@ kustomizations: bgp: _dependsOn: [kustomizations.helm]
 kustomizations: bgp: "manifest.yaml": {
   clusterResources: {
     "default-pool": ippool.#CiliumLoadBalancerIPPool & {
-      spec: cidrs: [{cidr: "10.16.3.0/24"}]
+      spec: blocks: [{cidr: "10.16.3.0/24"}]
     }
     default: bgppolicy.#CiliumBGPPeeringPolicy & { spec: {
       nodeSelector: matchLabels: "pythoner6.dev/bgp-policy": "default"

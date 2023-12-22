@@ -34,10 +34,10 @@
         name = "cilium-crds";
         src = pkgs.fetchgit {
           url = "https://github.com/cilium/cilium.git";
-          rev = "v1.14.5";
+          rev = "v1.15.0-rc.0";
           nonConeMode = true;
           sparseCheckout = [ "pkg/k8s/apis/cilium.io/client/crds" ];
-          hash = "sha256-1/ybsF8JVy2IY0vmnyH0bLWgf/675QXs9vuSB50bxn8=";
+          hash = "sha256-+iu/hM/5DPJydYoVIGaTsZ2omPwpmiKUD+ToLNhBU5w=";
         };
         nativeBuildInputs = [ pkgs.yq-go ];
         installPhase = ''
@@ -47,11 +47,16 @@
         '';
       };
 
+      gateway-crds = pkgs.fetchurl {
+        url = "https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.0.0/standard-install.yaml";
+        hash = "sha256-I+ThCVxyoFh0dPf7P4XDGc3sd6CDq5Ejf/vewfGDTSo=";
+      };
+
       charts = cue.charts {
         cilium.src = pkgs.fetchurl {
           # renovate: helmRepo=helm.cilium.io chart=cilium version=1.14.5
-          url = "https://helm.cilium.io/cilium-1.14.5.tgz";
-          hash = "sha256-f9FIo0bDr0IZ6GZay1YXzgZkfDqkH+24vN6SxnjpGsU=";
+          url = "https://helm.cilium.io/cilium-1.15.0-rc.0.tgz";
+          hash = "sha256-TKVEoMtL4rx2ndVW+0d/wep4vW7wRuOkkIPg6cMN6WM=";
         };
         external-secrets.crdValues."installCRDs" = true;
         external-secrets.src = pkgs.fetchurl {
@@ -88,9 +93,14 @@
           name = "netserv";
           src = ./apps;
           inherit charts;
-          extraDefinitions = [ (cue.fromCrds "flux-crds" flux-manifests) (cue.fromCrds "cilium-crds" cilium-crds) ];
+          extraDefinitions = [ 
+            (cue.fromCrds "flux-crds" flux-manifests) 
+            (cue.fromCrds "cilium-crds" cilium-crds) 
+            (cue.fromCrds "gateway-crds" gateway-crds)
+          ];
           extraManifests = {
             flux-components."flux-components.yaml" = flux-manifests;
+            cilium."crds.yaml" = gateway-crds;
           };
         };
         ociImages = cue.images {
