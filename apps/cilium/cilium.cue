@@ -48,6 +48,7 @@ kustomizations: bgp: "manifest.yaml": {
       virtualRouters: [{
         localASN: 64512
         exportPodCIDR: false
+        serviceSelector: matchExpressions: [{key: "bgp", operator: "NotIn", values: ["disabled"]}]
         neighbors: [{
           peerAddress: "10.16.2.2/32"
           peerASN: 64512
