@@ -30,6 +30,23 @@
         installPhase = "flux install --export > $out";
       };
 
+      cilium-crds = pkgs.stdenv.mkDerivation {
+        name = "cilium-crds";
+        src = pkgs.fetchgit {
+          url = "https://github.com/cilium/cilium.git";
+          rev = "v1.14.5";
+          nonConeMode = true;
+          sparseCheckout = [ "pkg/k8s/apis/cilium.io/client/crds" ];
+          hash = "sha256-1/ybsF8JVy2IY0vmnyH0bLWgf/675QXs9vuSB50bxn8=";
+        };
+        nativeBuildInputs = [ pkgs.yq-go ];
+        installPhase = ''
+          readarray -t files <<< "$(find . -type f -name "*.yaml")"
+          mkdir -p cue.mod/gen
+          yq . "''${files[@]}" > "$out"
+        '';
+      };
+
       charts = cue.charts {
         cilium.src = pkgs.fetchurl {
           # renovate: helmRepo=helm.cilium.io chart=cilium version=1.14.5
@@ -71,7 +88,7 @@
           name = "netserv";
           src = ./apps;
           inherit charts;
-          extraDefinitions = [ (cue.fromCrds "flux-crds" flux-manifests) ];
+          extraDefinitions = [ (cue.fromCrds "flux-crds" flux-manifests) (cue.fromCrds "cilium-crds" cilium-crds) ];
           extraManifests = {
             flux-components."flux-components.yaml" = flux-manifests;
           };

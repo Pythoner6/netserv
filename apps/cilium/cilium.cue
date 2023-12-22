@@ -2,6 +2,7 @@ package netserv
 
 import (
   helmrelease "helm.toolkit.fluxcd.io/helmrelease/v2beta2"
+  bgppolicy   "cilium.io/ciliumbgppeeringpolicy/v2alpha1"
 )
 
 appName: "cilium"
@@ -37,5 +38,29 @@ kustomizations: helm: "manifest.yaml": {
         }
       }
     }
+  }
+}
+
+kustomizations: bgp: "manifest.yaml": {
+  clusterResources: {
+    default: bgppolicy.#CiliumBGPPeeringPolicy & { spec: {
+      nodeSelector: matchLabels: "pythoner6.dev/bgp-policy": "default"
+      virtualRouters: [{
+        localASN: 64512
+        exportPodCIDR: false
+        neighbors: [{
+          peerAddress: "10.16.2.2/32"
+          peerASN: 64512
+          eBGPMultihopTTL: 10
+          connectRetryTimeSeconds: 120
+          holdTimeSeconds: 90
+          keepAliveTimeSeconds: 30
+          gracefulRestart: {
+            enabled: true
+            restartTimeSeconds: 120
+          }
+        }]
+      }]
+    }}
   }
 }
