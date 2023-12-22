@@ -36,7 +36,10 @@ kustomizations: helm: "manifest.yaml": {
           l7Proxy: true
           gatewayAPI: enabled: true
           rolloutCiliumPods: true
-          operator: rolloutPods: true
+          operator: {
+            rolloutPods: true
+            image: override: "ghcr.io/pythoner6/operator-generic:latest@sha256:789fd0bafc7e60221bce5b9ac6c233ea86a0ffe9765606e52b3860b4ee9c734b"
+          }
           ingressController: {
             enabled: true
             default: true
