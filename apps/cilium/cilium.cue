@@ -3,6 +3,7 @@ package netserv
 import (
   helmrelease "helm.toolkit.fluxcd.io/helmrelease/v2beta2"
   bgppolicy   "cilium.io/ciliumbgppeeringpolicy/v2alpha1"
+  ippool      "cilium.io/ciliumloadbalancerippool/v2alpha1"
 )
 
 appName: "cilium"
@@ -43,6 +44,9 @@ kustomizations: helm: "manifest.yaml": {
 
 kustomizations: bgp: "manifest.yaml": {
   clusterResources: {
+    "default-pool": ippool.#CiliumLoadBalancerIPPool & {
+      spec: cidrs: [{cidr: "10.16.3.0/24"}]
+    }
     default: bgppolicy.#CiliumBGPPeeringPolicy & { spec: {
       nodeSelector: matchLabels: "pythoner6.dev/bgp-policy": "default"
       virtualRouters: [{
