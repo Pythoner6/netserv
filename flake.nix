@@ -111,7 +111,7 @@
       };
       devShells.${system} = {
         default = pkgs.mkShell {
-          buildInputs = with pkgs; [ pkgs.cue pkgs.timoni postgresql jq nodejs nodePackages.npm typescript kubernetes-helm fluxcd umoci skopeo weave-gitops yq-go go xxd ];
+          buildInputs = with pkgs; [ pkgs.cue pkgs.timoni postgresql jq nodejs nodePackages.npm typescript kubernetes-helm flux umoci skopeo weave-gitops yq-go go xxd ];
         };
         push = pkgs.mkShell {
           buildInputs = with pkgs; [ skopeo ];
