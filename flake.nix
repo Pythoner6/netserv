@@ -13,14 +13,17 @@
       kubeVersion = "v1.29.0";
 
       cue = import ./tools/cue.nix {inherit pkgs kubeVersion;};
+      utils = import ./tools/utils.nix {inherit pkgs;};
 
       flux = pkgs.stdenv.mkDerivation {
         name = "flux";
-        src = pkgs.fetchzip {
+        src = utils.fetchurlHexDigest {
+          # renovate: github-release-attachments package=fluxcd/flux2 version=2.2.0
           url = "https://github.com/fluxcd/flux2/releases/download/v2.2.0/flux_2.2.0_linux_amd64.tar.gz";
-          hash = "sha256-Qw6x2ljZtvOBXe2KiGbeEN1APDeGbWGT3/kE5JIMWNs=";
+          digest = "223c3246663f9a31b6f67da7283af1fe77b4e42ddbfdc93e728829f0e976c97a";
         };
-        installPhase = "set -e; mkdir -p $out/bin; cp $src/flux $out/bin";
+        dontUnpack = true;
+        installPhase = "set -e; mkdir -p $out/bin; tar -xzf $src -C $out/bin flux";
       };
 
       flux-manifests = pkgs.stdenv.mkDerivation {
@@ -53,37 +56,33 @@
       };
 
       charts = cue.charts {
-        cilium.src = pkgs.fetchurl {
-          # renovate: helmRepo=helm.cilium.io chart=cilium version=1.14.5
+        cilium.src = utils.fetchurlHexDigest {
+          # renovate: helm=https://helm.cilium.io package=cilium version=1.15.0-rc.0
           url = "https://helm.cilium.io/cilium-1.15.0-rc.0.tgz";
-          hash = "sha256-TKVEoMtL4rx2ndVW+0d/wep4vW7wRuOkkIPg6cMN6WM=";
+          digest = "4ca544a0cb4be2bc769dd556fb477fc1ea78bd6ef046e3a49083e0e9c30de963";
         };
         external-secrets.crdValues."installCRDs" = true;
-        external-secrets.src = pkgs.fetchurl {
-          # renovate: helmRepo=charts.external-secrets.io chart=external-secrets version=0.9.10
+        external-secrets.src = utils.fetchurlHexDigest {
+          # renovate: helm=https://charts.external-secrets.io package=external-secrets version=0.9.10
           url = "https://github.com/external-secrets/external-secrets/releases/download/helm-chart-0.9.10/external-secrets-0.9.10.tgz";
-          hash = "sha256-PQzda4iAX5eAImAmaNd/FebP5wrPNLy9pHEBaMMQcwY=";
+          digest = "3d0cdd6b88805f978022602668d77f15e6cfe70acf34bcbda4710168c3107306";
         };
         cert-manager.crdValues."installCRDs" = true;
-        cert-manager.src = pkgs.fetchurl {
-          # renovate: helmRepo=charts.jetstack.io chart=cert-manager version=v1.13.3
+        cert-manager.src = utils.fetchurlHexDigest {
+          # renovate: helm=https://charts.jetstack.io package=cert-manager version=v1.13.3
           url = "https://charts.jetstack.io/charts/cert-manager-v1.13.3.tgz";
-          hash = "sha256-8w8+b3Mn8XHssa1gB531VjmtZGmoDzLltgZnr5UEVdU=";
+          digest = "f30f3e6f7327f171ecb1ad60079df55639ad6469a80f32e5b60667af950455d5";
         };
         rook.crdValues."crds.enable" = true;
-        rook.src  = pkgs.fetchurl {
-          # renovate: helmRepo=charts.rook.io/release chart=rook-ceph version=v1.13.1
+        rook.src  = utils.fetchurlHexDigest {
+          # renovate: helm=https://charts.rook.io/release package=rook-ceph version=v1.13.1
           url = "https://charts.rook.io/release/rook-ceph-v1.13.1.tgz";
-          hash = "sha256-76Ttrl2sneMSoe8jXAthanrlR3F5ATxN+Ga9bh1g4vo=";
+          digest = "efa4edae5dac9de312a1ef235c0b616a7ae5477179013c4df866bd6e1d60e2fa";
         };
-        gitea.src = pkgs.fetchurl {
-          # renovate: helmRepo=dl.gitea.com/charts chart=gitea version=10.0.0
+        gitea.src = utils.fetchurlHexDigest {
+          # renovate: helm=https://dl.gitea.com/charts package=gitea version=10.0.0
           url = "https://dl.gitea.com/charts/gitea-10.0.0.tgz";
-          hash = "sha256-/g93GkdEKhIHqBB8yrrAW6xvtjFIMqI9bhjtOwGoezc=";
-        };
-        ingress-nginx.src = pkgs.fetchurl {
-          url = "https://github.com/kubernetes/ingress-nginx/releases/download/helm-chart-4.8.3/ingress-nginx-4.8.3.tgz";
-          hash = "sha256-L4iBj1RE+AyBnWAgsGxhXjET1pJUn3ZedOwweeDA7k0=";
+          digest = "fe0f771a47442a1207a8107ccabac05bac6fb6314832a23d6e18ed3b01a87b37";
         };
       };
     in {
