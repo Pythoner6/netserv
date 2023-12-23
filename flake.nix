@@ -78,9 +78,9 @@
           digest = "efa4edae5dac9de312a1ef235c0b616a7ae5477179013c4df866bd6e1d60e2fa";
         };
         gitea.src = utils.fetchurlHexDigest {
-          # renovate: helm=https://dl.gitea.com/charts package=gitea version=10.0.0
-          url = "https://dl.gitea.com/charts/gitea-10.0.0.tgz";
-          digest = "fe0f771a47442a1207a8107ccabac05bac6fb6314832a23d6e18ed3b01a87b37";
+          # renovate: helm=https://dl.gitea.com/charts package=gitea version=10.0.2
+          url = "https://dl.gitea.com/charts/gitea-10.0.2.tgz";
+          digest = "0b52d987e0e3a214209d56c5f49b696f7a858aac042ca32d9c28858a762bd41d";
         };
       };
     in {
