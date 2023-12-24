@@ -62,8 +62,7 @@
         external-secrets.crdValues."installCRDs" = true;
         external-secrets.src = utils.fetchurlHexDigest {
           # renovate: helm=https://charts.external-secrets.io package=external-secrets version=0.9.10
-          url = "https://github.com/external-secrets/external-secrets/releases/download/helm-chart-0.9.10/external-secrets-0.9.10.tgz";
-          digest = "3d0cdd6b88805f978022602668d77f15e6cfe70acf34bcbda4710168c3107306";
+          url = "https://github.com/fluxcd/flux2/releases/download/helm-chart-0.9.10/flux_helm-chart-0.9.10_linux_amd64.tar.gz"; digest = "";
         };
         cert-manager.crdValues."installCRDs" = true;
         cert-manager.src = utils.fetchurlHexDigest {
