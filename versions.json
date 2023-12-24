@@ -1,0 +1,14 @@
+{
+  "talos": {
+    "datasource": "github-release-attachments",
+    "package": "siderolabs/talos",
+    "version": "v1.6.0",
+    "talosctlDigest": "3682def031e9b89e4fe4437b8b7cc9f383781f4c3173be9416cd65bc6e1333e7"
+  },
+  "flux": {
+    "datasource": "github-release-attachments",
+    "package": "fluxcd/flux2",
+    "version": "v2.2.2",
+    "digest": "292945a94ae370b91fe004e1f41b16063fc87371a61a1fd29958dfd959140a60"
+  }
+}

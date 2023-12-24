@@ -4,6 +4,7 @@
   };
   serialize = data: builtins.toJSON (builtins.toJSON data);
   getOpt = attrset: attr: default: if attrset ? ${attr} then attrset.${attr} else default;
+  lib = pkgs.lib;
 
   oci = import ./oci.nix {inherit pkgs;};
 
@@ -30,6 +31,16 @@
     installPhase = "${./scripts/vendor_chart_crds.sh} ${builtins.toJSON (builtins.toJSON (if chart ? "crdValues" then chart.crdValues else {}))} ${kubeVersion}";
   };
 
+  #filterSources = src: lib.sources.sourceByRegex src (let
+  #  f = remaining: transformed: let
+  #    numRemaining = builtins.length remaining;
+  #  in if numRemaining == 0 then transformed else let
+  #    prefix = lib.lists.sublist 0 (numRemaining - 1) remaining;
+  #    regex = "^" + (lib.strings.concatStringsSep "/" (prefix ++ [(lib.lists.last remaining) ''[^/]*$'']));
+  #  in f prefix ([regex] ++ transformed);
+  #  components = lib.path.subpath.components appPath;
+  #in f components [''^[^/]*$'']);
+
   synthApp = { name, src, appPath, chartIndex, cuePackageName, extraManifests, cueDefinitions }:
   let
     inputs = {
@@ -37,7 +48,8 @@
       path = appPath;
     };
   in pkgs.stdenv.mkDerivation {
-    inherit name src;
+    inherit name;
+    src = src;
     nativeBuildInputs = with pkgs; [ cue jq ];
     installPhase = "${./scripts/synth.sh} <<< ${serialize inputs}";
   };
@@ -73,16 +85,16 @@ in rec {
     };
   };
 
-  synth = { name, src, charts, cuePackageName ? name, extraManifests, extraDefinitions } @ args: 
+  synth = { name, src, appsSubdir ? ".", charts, cuePackageName ? name, extraManifests, extraDefinitions } @ args: 
   let
     apps = builtins.mapAttrs (appName: v: synthApp {
       inherit src cuePackageName;
       name = appName;
+      appPath = "${appsSubdir}/${appName}";
       cueDefinitions = [fromK8s] ++ extraDefinitions ++ charts.cueDefinitions;
       chartIndex = charts.chartIndex;
-      appPath = appName;
       extraManifests = getOpt args.extraManifests appName null;
-    }) (pkgs.lib.attrsets.filterAttrs (n: v: v == "directory" && n != "cue.mod") (builtins.readDir src));
+    }) (pkgs.lib.attrsets.filterAttrs (n: v: v == "directory" && n != "cue.mod") (builtins.readDir "${src}/${appsSubdir}"));
   in pkgs.stdenv.mkDerivation {
     inherit name;
     nativeBuildInputs = [ pkgs.jq ];

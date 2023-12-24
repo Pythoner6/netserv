@@ -8,7 +8,8 @@
       "customType": "regex",
       "fileMatch": ["^flake.nix$"],
       "matchStrings": [
-        "#\\s+renovate:\\s+(?<datasource>.*?)(=(?<registryUrl>.*?))? package=(?<depName>.*?) version=(?<currentValue>.*?)\\s+url = \"(?<tarballUrl>[^\"]*)\";\\s+digest = \"(?<currentDigest>[^\"]*)\";"
+        "#\\s+renovate:\\s+(?<datasource>.*?)(=(?<registryUrl>.*?))? package=(?<depName>.*?) version=(?<currentValue>.*?)\\s+url = \"(?<tarballUrl>[^\"]*)\";\\s+digest = \"(?<currentDigest>[^\"]*)\";",
+        "version = \"(?<currentValue>.*?)\";\\s+#\\s+renovate:\\s+(?<datasource>.*?)(=(?<registryUrl>.*?))? package=(?<depName>.*?)\\s+src\\s+=[^\\n]*?\\{\\s+url = \"(?<tarballUrl>[^\"]*)\";\\s+digest = \"(?<currentDigest>[^\"]*)\";"
       ]
     },
     {
@@ -19,6 +20,13 @@
       ],
       "datasourceTemplate": "github-release-attachments",
       "autoReplaceStringTemplate": "url = \"https://github.com/{{{depName}}}/releases/download/{{{newValue}}}/flux_{{{replace '^v' '' newValue}}}_linux_amd64.tar.gz\"; digest = \"{{{newDigest}}}\";"
+    },
+    {
+      "customType": "regex",
+      "fileMatch": ["^versions.json$"],
+      "matchStrings": [
+        "\"datasource\"\\s*:\\s*\"(?<datasource>.*?)\"\\s*,\\s*\"package\"\\s*:\\s*\"(?<depName>.*?)\"\\s*,\\s*\"version\"\\s*:\\s*\"(?<currentValue>.*?)\"\\s*,\\s*\".*?(d|D)igest\"\\s*:\\s*\"(?<currentDigest>.*?)\""
+      ]
     }
   ],
   "enabledManagers": ["regex"],

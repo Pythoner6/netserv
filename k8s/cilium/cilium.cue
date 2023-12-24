@@ -69,7 +69,7 @@ kustomizations: bgp: "manifest.yaml": {
       spec: blocks: [{cidr: "10.16.3.0/24"}]
     }
     default: bgppolicy.#CiliumBGPPeeringPolicy & { spec: {
-      nodeSelector: matchLabels: "pythoner6.dev/bgp-policy": "default"
+      nodeSelector: matchLabels: #DefaultBGPPolicyLabels
       virtualRouters: [{
         localASN: 64514
         exportPodCIDR: false

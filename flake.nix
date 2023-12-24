@@ -15,13 +15,29 @@
       cue = import ./tools/cue.nix {inherit pkgs kubeVersion;};
       utils = import ./tools/utils.nix {inherit pkgs;};
 
+      versions = builtins.fromJSON (builtins.readFile ./versions.json);
+      stripv = v: builtins.head (builtins.match "^v?(.*)" v);
+
       flux = pkgs.stdenv.mkDerivation {
-        name = "flux";
+        pname = versions.flux.package;
+        version = versions.flux.version;
         src = utils.fetchurlHexDigest {
-          url = "https://github.com/fluxcd/flux2/releases/download/v2.2.2/flux_2.2.2_linux_amd64.tar.gz"; digest = "292945a94ae370b91fe004e1f41b16063fc87371a61a1fd29958dfd959140a60";
+          url = "https://github.com/${versions.flux.package}/releases/download/${versions.flux.version}/flux_${stripv versions.flux.version}_linux_amd64.tar.gz"; 
+          digest = versions.flux.digest;
         };
         dontUnpack = true;
         installPhase = "set -e; mkdir -p $out/bin; tar -xzf $src -C $out/bin flux";
+      };
+
+      talosctl = pkgs.stdenv.mkDerivation {
+        pname = "talosctl";
+        version = versions.talos.version;
+        src = utils.fetchurlHexDigest {
+          url = "https://github.com/${versions.talos.package}/releases/download/${versions.talos.version}/talosctl-linux-amd64";
+          digest = versions.talos.talosctlDigest;
+        };
+        dontUnpack = true;
+        installPhase = "set -e; mkdir -p $out/bin; cp $src $out/bin/talosctl; chmod +x $out/bin/talosctl";
       };
 
       flux-manifests = pkgs.stdenv.mkDerivation {
@@ -88,7 +104,20 @@
         default = manifests;
         manifests = cue.synth {
           name = "netserv";
-          src = ./apps;
+          #src = ./.;
+          #src = let x = lib.sources.sourceByRegex ./. [
+          #  #''^k8s/.*\.cue$''
+          #  #''^cue.mod/.*\.cue$''
+          #  #''^[^/]*\.cue$''
+          #  ''^.*\.cue$''
+          #  ''^k8s$''
+          #]; in builtins.trace x x;
+          #src = lib.cleanSourceWith {
+          #  filter = path: type: if type == "directory" then true else ;
+          #  src = ./.;
+          #};
+          src = lib.sources.sourceFilesBySuffices ./. [".cue"];
+          appsSubdir = "k8s";
           inherit charts;
           extraDefinitions = [ 
             (cue.fromCrds "flux-crds" flux-manifests) 
@@ -108,7 +137,7 @@
       };
       devShells.${system} = {
         default = pkgs.mkShell {
-          buildInputs = with pkgs; [ pkgs.cue pkgs.timoni postgresql jq nodejs nodePackages.npm typescript kubernetes-helm flux umoci skopeo weave-gitops yq-go go xxd ];
+          buildInputs = with pkgs; [ pkgs.cue pkgs.timoni postgresql jq nodejs nodePackages.npm typescript kubernetes-helm flux umoci skopeo weave-gitops yq-go go xxd talosctl ];
         };
         push = pkgs.mkShell {
           buildInputs = with pkgs; [ skopeo ];
