@@ -8,4 +8,4 @@ dist-deps/
 result
 .ghtoken
 cue.mod/gen
-secrets.yaml
+secrets*.yaml
