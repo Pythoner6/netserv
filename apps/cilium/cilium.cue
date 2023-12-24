@@ -71,7 +71,7 @@ kustomizations: bgp: "manifest.yaml": {
     default: bgppolicy.#CiliumBGPPeeringPolicy & { spec: {
       nodeSelector: matchLabels: "pythoner6.dev/bgp-policy": "default"
       virtualRouters: [{
-        localASN: 64512
+        localASN: 64514
         exportPodCIDR: false
         serviceSelector: matchExpressions: [{key: "bgp", operator: "NotIn", values: ["disabled"]}]
         neighbors: [{
