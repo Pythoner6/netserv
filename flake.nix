@@ -18,7 +18,8 @@
       flux = pkgs.stdenv.mkDerivation {
         name = "flux";
         src = utils.fetchurlHexDigest {
-          url = "https://github.com/fluxcd/flux2/releases/download/v2.2.2/flux_2.2.2_linux_amd64.tar.gz"; digest = "292945a94ae370b91fe004e1f41b16063fc87371a61a1fd29958dfd959140a60";
+          url = "https://github.com/fluxcd/flux2/releases/download/v2.2.2/flux_2.2.2_linux_amd64.tar.gz"; 
+digest = "292945a94ae370b91fe004e1f41b16063fc87371a61a1fd29958dfd959140a60";
         };
         dontUnpack = true;
         installPhase = "set -e; mkdir -p $out/bin; tar -xzf $src -C $out/bin flux";
