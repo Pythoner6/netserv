@@ -23,7 +23,6 @@ kustomizations: helm: "manifest.yaml": {
         chart: spec: #Charts[appName]
         interval: "10m0s"
         values: {
-          image: override: "ghcr.io/pythoner6/cilium:latest@sha256:bfeec1e09b5c25cadeac7f8cb5f30ad3f4dcac59f72a01e56c97b340c464e3ae"
           bgpControlPlane: enabled: true
           hubble: {
             tls: auto: method: "cronJob"
@@ -38,7 +37,6 @@ kustomizations: helm: "manifest.yaml": {
           rolloutCiliumPods: true
           operator: {
             rolloutPods: true
-            image: override: "ghcr.io/pythoner6/operator-generic:latest@sha256:789fd0bafc7e60221bce5b9ac6c233ea86a0ffe9765606e52b3860b4ee9c734b"
           }
           ingressController: {
             enabled: true
