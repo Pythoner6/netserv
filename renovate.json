@@ -15,10 +15,9 @@
       "customType": "regex",
       "fileMatch": ["^flake.nix$"],
       "matchStrings": [
-        "url = \"https:\\/\\/github\\.com\\/(?<depName>.*?)\\/releases\\/download\\/(?<currentValue>.*?)\\/.*?\";\\s*digest\\s*=\\s*?\"(?<currentDigest>[^\"]*)\";"
+        "url = \"https:\\/\\/github\\.com\\/(?<depName>fluxcd\\/flux2)\\/releases\\/download\\/(?<currentValue>.*?)\\/.*?\";\\s*digest\\s*=\\s*?\"(?<currentDigest>[^\"]*)\";"
       ],
       "datasourceTemplate": "github-release-attachments",
-      "depNameTemplate": "fluxcd/flux2",
       "autoReplaceStringTemplate": "url = \"https://github.com/{{{depName}}}/releases/download/{{{newValue}}}/flux_{{{replace '^v' '' newValue}}}_linux_amd64.tar.gz\"; digest = \"{{{newDigest}}}\";"
     }
   ],
