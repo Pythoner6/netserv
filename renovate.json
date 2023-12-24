@@ -19,7 +19,7 @@
       ],
       "datasourceTemplate": "github-release-attachments",
       "depNameTemplate": "fluxcd/flux2",
-      "autoReplaceStringTemplate": "# renovate: flux version={{{newValue}}}{{{urlIndent}}}url = \"https://github.com/{{{packageName}}}/releases/download/{{{newValue}}}/flux_{{{replace '^v' '' newValue}}}_linux_amd64.tar.gz\";"
+      "autoReplaceStringTemplate": "# renovate: flux version={{{newValue}}}{{{urlIndent}}}url = \"https://github.com/{{{packageName}}}/releases/download/{{{newValue}}}/flux_{{{replace '^v' '' newValue}}}_linux_amd64.tar.gz\";{{{digestIndent}}}digest = \"{{{newDigest}}}\";"
     }
   ],
   "enabledManagers": ["regex"],
