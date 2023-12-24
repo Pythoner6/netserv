@@ -19,5 +19,5 @@ jobs:
         run: nix build
       - name: Push to registry
         run: |
-          mkdir -p /etc/containers && cp policy.json /etc/containers/policy.json
+          mkdir -p /etc/containers && cp .gitea/policy.json /etc/containers/policy.json
           nix develop .#push -c skopeo copy --dest-username ${{ gitea.actor }} --dest-password ${{ secrets.PACKAGE_PUBLISH_TOKEN }} --dest-tls-verify oci:result/oci-image:latest docker://gitea.home.josephmartin.org/${{ gitea.actor }}/netserv

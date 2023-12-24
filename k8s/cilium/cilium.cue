@@ -38,11 +38,7 @@ kustomizations: helm: "manifest.yaml": {
           operator: {
             rolloutPods: true
           }
-          ingressController: {
-            enabled: true
-            default: true
-            loadBalancerMode: "dedicated"
-          }
+          ingressController: enabled: false
 
           // Required for Talos
           securityContext: capabilities: {
