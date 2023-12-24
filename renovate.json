@@ -15,11 +15,11 @@
       "customType": "regex",
       "fileMatch": ["^flake.nix$"],
       "matchStrings": [
-        "#\\s+renovate:\\s+flux version=(?<currentValue>.*?)(?<urlIndent>\\s+)url = \"[^\"]*\";(?<digestIndent>\\s+)digest = \"(?<currentDigest>[^\"]*)\";"
+        "url = \"https:\\/\\/github\\.com\\/(?<depName>.*?)\\/releases\\/download\\/(?<currentValue>.*?)\\/.*?_linux_amd64\\.tar\\.gz\";(?<digestIndent>\\s*)digest = \"(?<currentDigest>[^\"]*)\";"
       ],
       "datasourceTemplate": "github-release-attachments",
       "depNameTemplate": "fluxcd/flux2",
-      "autoReplaceStringTemplate": "# renovate: flux version={{{newValue}}}{{{urlIndent}}} url = \"https://github.com/{{{depName}}}/releases/download/{{{newValue}}}/flux_{{{replace '^v' '' newValue}}}_linux_amd64.tar.gz\";{{{digestIndent}}} digest = \"{{{newDigest}}}\";"
+      "autoReplaceStringTemplate": "url = \"https://github.com/{{{depName}}}/releases/download/{{{newValue}}}/flux_{{{replace '^v' '' newValue}}}_linux_amd64.tar.gz\";{{{digestIndent}}}digest = \"{{{newDigest}}}\";"
     }
   ],
   "enabledManagers": ["regex"],

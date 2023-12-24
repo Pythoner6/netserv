@@ -18,7 +18,6 @@
       flux = pkgs.stdenv.mkDerivation {
         name = "flux";
         src = utils.fetchurlHexDigest {
-          # renovate: flux version=v2.2.0
           url = "https://github.com/fluxcd/flux2/releases/download/v2.2.0/flux_2.2.0_linux_amd64.tar.gz";
           digest = "223c3246663f9a31b6f67da7283af1fe77b4e42ddbfdc93e728829f0e976c97a";
         };
