@@ -77,9 +77,9 @@
         };
         external-secrets.crdValues."installCRDs" = true;
         external-secrets.src = utils.fetchurlHexDigest {
-          # renovate: helm=https://charts.external-secrets.io package=external-secrets version=0.9.10
-          url = "https://github.com/external-secrets/external-secrets/releases/download/helm-chart-0.9.10/external-secrets-0.9.10.tgz";
-          digest = "3d0cdd6b88805f978022602668d77f15e6cfe70acf34bcbda4710168c3107306";
+          # renovate: helm=https://charts.external-secrets.io package=external-secrets version=0.9.11
+          url = "https://github.com/external-secrets/external-secrets/releases/download/helm-chart-0.9.11/external-secrets-0.9.11.tgz";
+          digest = "fec0e3c284d779963f4c0df7274cf0a81b428967b1f9c5063a2d5af4241a021f";
         };
         cert-manager.crdValues."installCRDs" = true;
         cert-manager.src = utils.fetchurlHexDigest {
