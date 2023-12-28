@@ -41,25 +41,25 @@
   #  components = lib.path.subpath.components appPath;
   #in f components [''^[^/]*$'']);
 
-  synthApp = { name, src, appPath, chartIndex, cuePackageName, extraManifests, cueDefinitions }:
+  builder = pkgs.buildGoModule {
+    name = "builder";
+    src = ./builder;
+    vendorHash = "sha256-xuuTZAA429diTa0b+bcuPWz0v2kcA1OpAYwQGuQLpEg=";
+  };
+
+  synthApp = { name, src, appPath, chartIndex, cuePackageName, extraManifests, cueDefinitions, apps ? [] }:
   let
     inputs = {
-      inherit chartIndex cuePackageName cueDefinitions extraManifests;
+      inherit chartIndex cuePackageName cueDefinitions extraManifests apps;
       path = appPath;
     };
   in pkgs.stdenv.mkDerivation {
     inherit name;
     src = src;
-    nativeBuildInputs = with pkgs; [ cue jq ];
-    installPhase = "${./scripts/synth.sh} <<< ${serialize inputs}";
+    nativeBuildInputs = [ builder ];
+    installPhase = "builder <<< ${serialize inputs}";
   };
 in rec {
-  #builder = pkgs.buildGoModule {
-  #  name = "builder";
-  #  src = ./builder;
-  #  vendorHash = "sha256-Tq/zgsOdXms916ms1+Wa0MweKa0P7dn/0g0mvaGJV2Y=";
-  #};
-
   fromCrds = name: src: pkgs.stdenv.mkDerivation {
     inherit name src;
     dontUnpack = true;
@@ -85,7 +85,7 @@ in rec {
     };
   };
 
-  synth = { name, src, appsSubdir ? ".", charts, cuePackageName ? name, extraManifests, extraDefinitions } @ args: 
+  synth = { name, src, rootAppName, appsSubdir ? ".", charts, cuePackageName ? name, extraManifests, extraDefinitions } @ args: 
   let
     apps = builtins.mapAttrs (appName: v: synthApp {
       inherit src cuePackageName;
@@ -94,7 +94,17 @@ in rec {
       cueDefinitions = [fromK8s] ++ extraDefinitions ++ charts.cueDefinitions;
       chartIndex = charts.chartIndex;
       extraManifests = getOpt args.extraManifests appName null;
-    }) (pkgs.lib.attrsets.filterAttrs (n: v: v == "directory" && n != "cue.mod") (builtins.readDir "${src}/${appsSubdir}"));
+    }) (pkgs.lib.attrsets.filterAttrs (n: v: v == "directory" && n != "cue.mod" && n != rootAppName) (builtins.readDir "${src}/${appsSubdir}"));
+    rootApp = synthApp {
+      inherit src cuePackageName;
+      name = rootAppName;
+      appPath = "${appsSubdir}/${rootAppName}";
+      cueDefinitions = [fromK8s] ++ extraDefinitions ++ charts.cueDefinitions;
+      chartIndex = charts.chartIndex;
+      extraManifests = getOpt args.extraManifests rootAppName null;
+      apps = builtins.attrValues apps;
+      #digests = builtins.map (p: "${p}/index.json") (pkgs.lib.lists.flatten (builtins.map (app: builtins.map (k: "${app}/${k}") (builtins.attrNames (builtins.readDir app))) apps))
+    };
   in pkgs.stdenv.mkDerivation {
     inherit name;
     nativeBuildInputs = [ pkgs.jq ];
@@ -102,7 +112,7 @@ in rec {
     installPhase = ''
       set -euxo pipefail
       mkdir "$out"
-      declare -A apps="($(jq -r 'to_entries | map(.key, .value | tostring) | @sh' <<< ${serialize apps}))"
+      declare -A apps="($(jq -r 'to_entries | map(.key, .value | tostring) | @sh' <<< ${serialize (apps // {${rootAppName} = rootApp;})}))"
       for app in "''${!apps[@]}"; do
         cp -r "''${apps["$app"]}/." "$out"
       done
@@ -112,11 +122,7 @@ in rec {
 
   images = { name, src, charts } @ args: let
   in pkgs.stdenv.mkDerivation {
-    inherit name;
-    src = oci.image {
-      inherit name;
-      inherit (args) src;
-    };
+    inherit name src;
     dontUnpack = true;
     nativeBuildInputs = [ pkgs.jq ];
     installPhase = ''

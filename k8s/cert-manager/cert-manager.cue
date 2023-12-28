@@ -8,22 +8,19 @@ import (
 appName: "cert-manager"
 
 kustomizations: {
-  helm: "manifest.yaml": {
-    clusterResources: ns: #AppNamespace
-    resources: {
-      (appName): helmrelease.#HelmRelease & {
-        spec: {
-          chart: spec: #Charts[appName]
-          interval: "10m0s"
-          values: installCRDs: true
-        }
+  helm: "release": {
+    ns: #AppNamespace
+    (appName): helmrelease.#HelmRelease & {
+      spec: {
+        chart: spec: #Charts[appName]
+        interval: "10m0s"
+        values: installCRDs: true
       }
     }
   }
-  $default: _dependsOn: [helm]
-  $default: "issuers.yaml": {
-    namespace: #AppNamespace
-    clusterResources: "self-signed": clusterissuer.#ClusterIssuer & {
+  $default: #dependsOn: [helm]
+  $default: "issuers": {
+    "self-signed": clusterissuer.#ClusterIssuer & {
       spec: selfSigned: {}
     }
   }

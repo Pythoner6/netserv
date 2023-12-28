@@ -3,9 +3,10 @@ package netserv
 import (
   "tool/exec"
   "tool/file"
+  "tool/os"
   "strings"
   //"path"
-  "list"
+  //"list"
   //"crypto/sha256"
   //"encoding/hex"
   "encoding/yaml"
@@ -13,7 +14,6 @@ import (
 )
 
 outputDir: string & strings.MinRunes(1) @tag(outputDir)
-_appDir: "\(outputDir)/\(appName)"
 
 #FluxResourceOrdering: {
   _obj: {apiVersion: string}
@@ -24,60 +24,44 @@ _appDir: "\(outputDir)/\(appName)"
 }
 
 command: synth: {
-  mkAppDir: file.Mkdir & {
-    createParents: true
-    permissions: 0o777
-    path: "\(_appDir)"
-  }
-
-  //if extraManifests != null {
-  //    for output, input in json.Unmarshal(extraManifests) {
-  //      "copy-extra-manifest-\(hex.Encode(sha256.Sum256(output)))": exec.Run & {
-  //        $after: [mkAppDir]
-  //        cmd: ["cp", input, "\(_appDir)/manifests/\(output)"]
-  //      }
-  //    }
-  //}
-
-  "create-kustomization-yaml": file.Append & {
-    $after: [mkAppDir]
-    filename: "\(_appDir)/kustomization.yaml"
-    contents: yaml.Marshal({
-      apiVersion: "kustomize.config.k8s.io/v1beta1"
-      kind: "Kustomization"
-      resources: [ "./flux-resources.yaml" ]
-    })
-  }
-
-  "create-flux-resources-yaml": file.Create & {
-    $after: [mkAppDir]
-    filename: "\(_appDir)/flux-resources.yaml"
-    contents: yaml.MarshalStream(list.Sort([for _, r in fluxResources {r}], {
-      x: _, y: _
-      less: (#FluxResourceOrdering & { _obj: x }).order < (#FluxResourceOrdering & { _obj: y }).order
-    }))
-  }
+  envVars: os.Environ
 
   for kustomizationName, kustomization in kustomizations {
-    mkKustomizationDir=(fluxResources[kustomizationName].spec.path): file.Mkdir & {
-      createParents: true
-      permissions: 0o777
-      path: "\(outputDir)/\(fluxResources[kustomizationName].spec.path)"
-    }
-    for output, input in kustomization._extraManifests {
-      "\(fluxResources[kustomizationName].spec.path)/\(output)": exec.Run & {
-        $after: [mkKustomizationDir]
-        cmd: ["cp", input, "\(outputDir)/\(fluxResources[kustomizationName].spec.path)/\(output)"]
+    (kustomizationName): {
+      _kustomizationSubdir: "\(appName)\([if kustomizationName == "$default" {""}, "-" + kustomizationName][0])"
+      kustomizationDir: file.Mkdir & {
+        createParents: true
+        permissions: 0o777
+        path: "\(outputDir)/\(_kustomizationSubdir)"
       }
-    }
-    for manifestName, manifest in kustomization {
-      "\(fluxResources[kustomizationName].spec.path)/\(manifestName)": file.Create & {
-        $after: [mkKustomizationDir]
-        filename: "\(outputDir)/\(fluxResources[kustomizationName].spec.path)/\(manifestName)"
-        contents: yaml.MarshalStream([
-          for _, r in manifest.clusterResources {r},
-          for _, r in manifest.resources {r},
-        ])
+      for output, input in kustomization._extraManifests {
+        "manifest:\(output)": exec.Run & {
+          $after: [kustomizationDir]
+          cmd: ["cp", input, "\(kustomizationDir.path)/\(output)"]
+        }
+      }
+      for manifestName, manifest in kustomization {
+        "manifest:\(manifestName)": file.Create & {
+          $after: [kustomizationDir]
+          filename: "\(kustomizationDir.path)/\(manifestName)"
+          contents: yaml.MarshalStream([
+            for _, r in manifest.clusterResources {r},
+            for _, r in manifest.resources {r},
+          ])
+        }
+      }
+      oci: exec.Run & {
+        $after: [
+          for output, _ in kustomization._extraManifests { command.synth["manifest:\(output)"] },
+          for manifestName, _ in kustomization { command.synth["manifest:\(manifestName)"] },
+        ]
+        cmd: ["bash", "./tools/scripts/build_manifest_oci.sh", "\(outputDir)/\(_kustomizationSubdir)"]
+        env: {
+          out: "\(outputDir)/oci/\(_kustomizationSubdir)"
+          for k, v in envVars if k !~"^[$]" && k != "out" { 
+            (k): v
+          }
+        }
       }
     }
   }

@@ -1,7 +1,7 @@
 package main
 
 import (
-  _ "crypto/sha256"
+  "crypto/sha256"
   "encoding/json"
   "gopkg.in/yaml.v3"
   "log"
@@ -13,7 +13,12 @@ import (
   "os/exec"
   "io/fs"
   "strings"
-  "bufio"
+  "slices"
+  "cmp"
+  "archive/tar"
+  "compress/gzip"
+  "bytes"
+  //"bufio"
 
   "github.com/gowebpki/jcs"
   ociv1 "github.com/opencontainers/image-spec/specs-go/v1"
@@ -23,6 +28,14 @@ import (
   "helm.sh/helm/v3/pkg/chart"
   "helm.sh/helm/v3/pkg/action"
   "helm.sh/helm/v3/pkg/chartutil"
+  "cuelang.org/go/cue/load"
+  "cuelang.org/go/cue"
+  //"cuelang.org/go/cue/errors"
+  "cuelang.org/go/cue/cuecontext"
+  cueyaml "cuelang.org/go/encoding/yaml"
+  //cuejson "cuelang.org/go/encoding/json"
+  //"cuelang.org/go/encoding/gocode/gocodec"
+  //"cuelang.org/go/cue/build"
 )
 
 const (
@@ -104,6 +117,21 @@ func generateIndex(manifest ociv1.Descriptor) ([]byte, error) {
   index := ociv1.Index{
     Versioned: oci.Versioned{SchemaVersion: 2},
     Manifests: []ociv1.Descriptor{manifest},
+  }
+
+  data, err := marshalCanonical(index)
+  if err != nil { return nil, err }
+
+  return data, nil
+}
+
+func generateIndexWithName(manifest ociv1.Descriptor, name string) ([]byte, error) {
+  index := ociv1.Index{
+    Versioned: oci.Versioned{SchemaVersion: 2},
+    Manifests: []ociv1.Descriptor{manifest},
+    Annotations: map[string]string{
+      ociv1.AnnotationRefName: name,
+    },
   }
 
   data, err := marshalCanonical(index)
@@ -207,6 +235,62 @@ func WriteChartOCI(chartArchive, chartsDir string) error {
 
   writer := newBlobWriter(outDir)
   err = writer.copyFile(chartArchive, archiveDescriptor)
+  if err != nil { return err }
+  err = writer.writeBlob(config, configDescriptor)
+  if err != nil { return err }
+  err = os.WriteFile(path.Join(outDir, ociv1.ImageIndexFile), index, FilePermissions)
+  if err != nil { return err }
+  err = os.WriteFile(path.Join(outDir, ociv1.ImageLayoutFile), layout, FilePermissions)
+  if err != nil { return err }
+  err = writer.writeBlob(manifest, manifestDescriptor)
+  if err != nil { return err }
+
+  return err
+}
+
+func configForContent(content []byte) ([]byte, error) {
+  h := sha256.New()
+  _, err := io.Copy(h, bytes.NewReader(content))
+  if err != nil { return nil, err }
+
+  config := ociv1.Image{
+    RootFS: ociv1.RootFS{
+      Type: "layers",
+      DiffIDs: []digest.Digest{digest.NewDigest(digest.SHA256, h)},
+    },
+  }
+
+  configJson, err := marshalCanonical(config)
+  if err != nil { return nil, err }
+
+  return configJson, nil
+}
+
+func WriteOCI(outDir string, name string, content []byte) error {
+  var buf bytes.Buffer
+  gzipWriter := gzip.NewWriter(&buf)
+  _, err := io.Copy(gzipWriter, bytes.NewReader(content))
+  gzipWriter.Close()
+  if err != nil { return err }
+
+  contentDescriptor := bytesDescriptor(buf.Bytes(), ociv1.MediaTypeImageLayerGzip)
+
+  config, err := configForContent(content)
+  if err != nil { return err }
+  configDescriptor := bytesDescriptor(config, ociv1.MediaTypeImageConfig)
+
+  manifest, err := generateManifest(configDescriptor, contentDescriptor)
+  if err != nil { return err }
+  manifestDescriptor := bytesDescriptor(manifest, ociv1.MediaTypeImageManifest)
+
+  index, err := generateIndexWithName(manifestDescriptor, name)
+  if err != nil { return err }
+
+  layout, err := generateOCILayout()
+  if err != nil { return err }
+
+  writer := newBlobWriter(outDir)
+  err = writer.writeBlob(buf.Bytes(), contentDescriptor)
   if err != nil { return err }
   err = writer.writeBlob(config, configDescriptor)
   if err != nil { return err }
@@ -374,7 +458,176 @@ type GenerateCueInput struct {
   KubeVersion string         `json:"kubeVersion"`
 }
 
+//type Kustomization struct {
+//  Name      string     `cue:"_name"`
+//  Manifests []Manifest `cue:""`
+//}
+
+type Manifest struct {
+  Name    string
+  Content io.Reader
+  Size    int64
+}
+
+func generateKustomizationTarData(kustomization cue.Value, extraManifests map[string]string, writer io.Writer) error {
+  tarWriter := tar.NewWriter(writer)
+  defer tarWriter.Close()
+
+  manifests, err := kustomization.Fields()
+  var files []Manifest
+  if err != nil { return err }
+  for manifests.Next() {
+    manifestName := manifests.Selector().Unquoted()
+    if err != nil { return err }
+    resources := manifests.Value().LookupPath(cue.MakePath(cue.Def("#asList")))
+    resourceList, err := resources.List()
+    if err != nil { return err }
+    data, err := cueyaml.EncodeStream(resourceList)
+    if err != nil { return err }
+    files = append(files, Manifest{Name: manifestName, Content: bytes.NewReader(data), Size: int64(len(data))})
+  }
+  for output, input := range extraManifests {
+    file, err := os.Open(input)
+    if err != nil { return err }
+    stat, err := file.Stat()
+    if err != nil { return err }
+    files = append(files, Manifest{Name: output, Content: file, Size: stat.Size()})
+  }
+  slices.SortFunc(files, func(a,b Manifest) int { return cmp.Compare(a.Name, b.Name) })
+  for _, manifest := range files {
+    err = tarWriter.WriteHeader(&tar.Header{
+      Size: manifest.Size,
+      Mode: 0644,
+      Name: manifest.Name + ".yaml",
+      Format: tar.FormatPAX,
+    })
+    if err != nil { return err }
+    written, err := io.Copy(tarWriter, manifest.Content)
+    if err != nil { return err }
+    if written != manifest.Size {
+      return fmt.Errorf("wrong amount of bytes written")
+    }
+  }
+
+  return nil
+}
+
+func Synth(pkgs, tags []string, extraManifests map[string]map[string]string, outDir string) error {
+  cfg := load.Config{
+    Tags: tags,
+  }
+
+  ctx := cuecontext.New()
+  values, err := ctx.BuildInstances(load.Instances(pkgs, &cfg))
+  if err != nil { return err }
+
+  for i := range values {
+    err = values[i].Validate(cue.Concrete(true), cue.Definitions(true), cue.Final())
+    if err != nil { return err }
+    kustomizationsValue := values[i].LookupPath(cue.MakePath(cue.Str("kustomizations")))
+    kustomizations, err := kustomizationsValue.Fields()
+    if err != nil { return err }
+
+    for kustomizations.Next() {
+      var buf bytes.Buffer
+
+      kustomizationFullName, err := kustomizations.Value().LookupPath(cue.MakePath(cue.Def("#fullName"))).String()
+      if err != nil { return err }
+
+      kustomizationName, err := kustomizations.Value().LookupPath(cue.MakePath(cue.Def("#name"))).String()
+      if err != nil { return err }
+
+      extra, ok := extraManifests[kustomizationName]
+      if !ok { 
+        extra = map[string]string{}
+      }
+
+      generateKustomizationTarData(kustomizations.Value(), extra, &buf)
+
+
+      WriteOCI(path.Join(outDir, kustomizationFullName), kustomizationFullName, buf.Bytes())
+    }
+    if err != nil { panic(err) }
+  }
+  
+  return nil
+}
+
+type SynthInput struct {
+  Path           string   `json:"path"`
+  ChartIndex     string   `json:"chartIndex"`
+  CuePackageName string   `json:"cuePackageName"`
+  CueDefinitions []string `json:"cueDefinitions"`
+  ExtraManifests map[string]map[string]string `json:"extraManifests"`
+  Apps           []string `json:"apps"`
+}
+
 func main() {
+  bytes, err := io.ReadAll(os.Stdin)
+  if err != nil { panic(err) }
+
+  log.Println(string(bytes))
+
+  var input SynthInput
+  err = json.Unmarshal(bytes, &input)
+  if err != nil { panic(err) }
+
+  index, err := os.Open(input.ChartIndex)
+  if err != nil { panic(err) }
+  charts, err := io.ReadAll(index)
+  if err != nil { panic(err) }
+  tags := []string{
+    "charts=" + string(charts),
+  }
+
+  digests := make(map[string]string)
+  for _, app := range input.Apps {
+    entries, err := os.ReadDir(app)
+    if err != nil { panic(err) }
+    for _, entry := range entries {
+      if !entry.IsDir() {
+        continue
+      }
+
+      indexFile, err := os.Open(path.Join(app, entry.Name(), "index.json"))
+      if err != nil { panic(err) }
+      indexJson, err := io.ReadAll(indexFile)
+      if err != nil { panic(err) }
+      var index ociv1.Index
+      err = json.Unmarshal(indexJson, &index)
+      if err != nil { panic(err) }
+      if len(index.Manifests) != 1 {
+        panic("Expected exactly one manifest in index")
+      }
+      digests[entry.Name()] = index.Manifests[0].Digest.Encoded()
+    }
+  }
+  
+  if len(digests) > 0 {
+    digestsJson, err := json.Marshal(digests)
+    if err != nil { panic(err) }
+    tags = append(tags, "digests=" + string(digestsJson))
+  }
+
+  os.MkdirAll("./cue.mod/gen", DirectoryPermissions)
+
+  for _, def := range input.CueDefinitions {
+    entries, err := os.ReadDir(def)
+    if err != nil { panic(err) }
+    for _, entry := range entries {
+      if !entry.IsDir() {
+        continue
+      }
+
+      err = os.Symlink(path.Join(def, entry.Name()), path.Join("./cue.mod/gen", entry.Name()))
+      if err != nil { panic(err) }
+    }
+  }
+
+  err = Synth([]string{"./" + input.Path + ":" + input.CuePackageName}, tags, input.ExtraManifests, os.Getenv("out"))
+  if err != nil { panic(err) }
+
+  /*
   outDir := os.Getenv("out")
   src := os.Getenv("src")
 
@@ -386,6 +639,7 @@ func main() {
     log.Println("ERROR:", err)
     os.Exit(1)
   }
+  */
 
   /*
   err := WriteChartOCI("rook.tgz", "./charts")

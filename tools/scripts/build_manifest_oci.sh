@@ -11,6 +11,11 @@ function len() {
   wc -c "$1" | cut -f1 -d' '
 }
 
+declare -a input_dir_flags=()
+if [[ ! -z "$1" ]]; then
+  input_dir_flags+=("-C" "$1")
+fi
+
 layer_tar=$(mktemp)
 layer_gz=$(mktemp)
 tar_reproducible_flags=(
@@ -19,7 +24,7 @@ tar_reproducible_flags=(
   --pax-option=exthdr.name=%d/PaxHeaders/%f,delete=atime,delete=ctime
 )
 mkdir -p "$out/blobs/sha256"
-tar "${tar_reproducible_flags[@]}" -cf "$layer_tar" .
+tar "${input_dir_flags[@]}" "${tar_reproducible_flags[@]}" -cf "$layer_tar" .
 diffid="$(sha256sum "$layer_tar" | cut -f1 -d' ')"
 gzip -c "$layer_tar" > "$layer_gz"
 rm "$layer_tar"

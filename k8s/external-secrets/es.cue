@@ -5,15 +5,14 @@ import (
 )
 
 appName: "external-secrets"
+#Charts: _
 
-kustomizations: helm: "helmrelease.yaml": {
-  clusterResources: ns: #AppNamespace
-  resources: {
-    (appName): helmrelease.#HelmRelease & {
-      spec: {
-        chart: spec: #Charts[appName]
-        interval: "10m0s"
-      }
+kustomizations: helm: "release": {
+  ns: #AppNamespace
+  (appName): helmrelease.#HelmRelease & {
+    spec: {
+      chart: spec: #Charts[appName]
+      interval: "10m0s"
     }
   }
 }

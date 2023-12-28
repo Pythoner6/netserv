@@ -104,20 +104,10 @@
         default = manifests;
         manifests = cue.synth {
           name = "netserv";
-          #src = ./.;
-          #src = let x = lib.sources.sourceByRegex ./. [
-          #  #''^k8s/.*\.cue$''
-          #  #''^cue.mod/.*\.cue$''
-          #  #''^[^/]*\.cue$''
-          #  ''^.*\.cue$''
-          #  ''^k8s$''
-          #]; in builtins.trace x x;
-          #src = lib.cleanSourceWith {
-          #  filter = path: type: if type == "directory" then true else ;
-          #  src = ./.;
-          #};
-          src = lib.sources.sourceFilesBySuffices ./. [".cue"];
+          #src = lib.sources.sourceFilesBySuffices ./. [".cue"];
+          src = ./.;
           appsSubdir = "k8s";
+          rootAppName = "root";
           inherit charts;
           extraDefinitions = [ 
             (cue.fromCrds "flux-crds" flux-manifests) 
@@ -125,8 +115,8 @@
             (cue.fromCrds "gateway-crds" gateway-crds)
           ];
           extraManifests = {
-            flux-components."flux-components.yaml" = flux-manifests;
-            cilium."crds.yaml" = gateway-crds;
+            flux.components."flux-components.yaml" = flux-manifests;
+            cilium.gateway-crds."crds.yaml" = gateway-crds;
           };
         };
         ociImages = cue.images {
