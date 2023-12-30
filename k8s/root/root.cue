@@ -7,6 +7,7 @@ import (
   es "pythoner6.dev/netserv/k8s/external-secrets:netserv"
   flux "pythoner6.dev/netserv/k8s/flux-components:netserv"
   cm "pythoner6.dev/netserv/k8s/cert-manager:netserv"
+  dcsi "pythoner6.dev/netserv/k8s/democratic-csi:netserv"
 )
 
 appName: "root"
@@ -16,6 +17,7 @@ appName: "root"
   cilium,
   es,
   cm,
+  dcsi,
 ]
 
 #digests: yaml.Unmarshal({s: string @tag(digests)}.s)
