@@ -595,7 +595,7 @@ func main() {
       if len(index.Manifests) != 1 {
         panic("Expected exactly one manifest in index")
       }
-      digests[entry.Name()] = index.Manifests[0].Digest.Encoded()
+      digests[entry.Name()] = string(index.Manifests[0].Digest)
     }
   }
   
