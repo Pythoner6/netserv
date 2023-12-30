@@ -31,7 +31,7 @@ jobs:
           set -euo pipefail
           ACTOR=${ACTOR,,}
           source tools/scripts/oci_helpers.sh
-          crane auth login -u "$ACTOR" --password-stdin <<< "$TOKEN" "$BASE_URL" 
+          crane auth login -u "$ACTOR" --password-stdin <<< "$TOKEN" "ghcr.io" 
           readarray -t charts <<< "$(find result/charts -maxdepth 1 -mindepth 1 -type d)"
           for chart in "${charts[@]}"; do
             crane push "$chart" "$BASE_URL/charts/$(get_chart_name "$chart"):$(get_chart_version "$chart")"
