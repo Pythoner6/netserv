@@ -16,7 +16,7 @@ kustomizations: $default: "manifest": {
     metadata: name: "gitlab"
     spec: {
       instances: 3
-      maxSyncReplicas: 3
+      maxSyncReplicas: 2
       minSyncReplicas: 2
       storage: {
         storageClass: dcsi.localHostpath
