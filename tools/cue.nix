@@ -1,6 +1,6 @@
 {pkgs, kubeVersion}: let
   versions = {
-    "v1.29.0" = "sha256-M0zdXmTfyykNtzkQu1D/+DWAoeOWOpLS7Qy6UFT6/Ns=";
+    "v1.29.0" = "sha256-k6mFE+GNe5DWAWIDQwvApgqe5doWmFP0cNBbRLyqR7c=";
   };
   serialize = data: builtins.toJSON (builtins.toJSON data);
   getOpt = attrset: attr: default: if attrset ? ${attr} then attrset.${attr} else default;

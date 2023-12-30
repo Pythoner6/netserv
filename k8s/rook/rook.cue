@@ -5,6 +5,7 @@ import (
   helmrelease "helm.toolkit.fluxcd.io/helmrelease/v2beta2"
   clusters "ceph.rook.io/cephcluster/v1"
   objectstores "ceph.rook.io/cephobjectstore/v1"
+  storagev1 "k8s.io/api/storage/v1"
 )
 
 appName: "rook"
@@ -101,6 +102,15 @@ kustomizations: cluster: "manifest": {
         port: 80
         instances: 1
       }
+    }
+  }
+  bucketStorageClass: storagev1.#StorageClass & {
+    metadata: name: "rook-bucket-retained"
+    provisioner: "rook-system.ceph.rook.io/bucket"
+    reclaimPolicy: "Retain"
+    parameters: {
+      objectStoreName: objectstore.metadata.name
+      objectStoreNamespace: objectstore.metadata.namespace
     }
   }
 }
