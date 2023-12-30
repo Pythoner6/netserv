@@ -10,7 +10,7 @@ appName: "gitlab"
 #Charts: _
 
 kustomizations: $default: #dependsOn: [dcsi.kustomizations.helm, cnpg.kustomizations.helm]
-kustomizations: $default: "manifest": {
+kustomizations: $default: manifest: {
   ns: #AppNamespace
   cluster: clusters.#Cluster & {
     metadata: name: "gitlab"
@@ -31,4 +31,27 @@ kustomizations: $default: "manifest": {
       }]
     }
   }
+  cluster: clusters.#Cluster & {
+    metadata: name: "praefect"
+    spec: {
+      instances: 3
+      maxSyncReplicas: 2
+      minSyncReplicas: 2
+      storage: {
+        storageClass: dcsi.localHostpath
+        size: "1Gi"
+      }
+      affinity: nodeAffinity: requiredDuringSchedulingIgnoredDuringExecution: nodeSelectorTerms: [{
+        matchExpressions: [{
+          key: "storage"
+          operator: "In"
+          values: ["yes"]
+        }]
+      }]
+    }
+  }
 }
+
+//kustomizations: helm: #dependsOn: [kustomizations["$default"]]
+//kustomizations: helm: manifest: {
+//}
