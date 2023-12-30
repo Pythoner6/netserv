@@ -22,6 +22,13 @@ kustomizations: $default: "manifest": {
         storageClass: dcsi.localHostpath
         size: "10Gi"
       }
+      affinity: nodeAffinity: requiredDuringSchedulingIgnoredDuringExecution: nodeSelectorTerms: [{
+        matchExpressions: [{
+          key: "storage"
+          operator: "In"
+          values: ["yes"]
+        }]
+      }]
     }
   }
 }
