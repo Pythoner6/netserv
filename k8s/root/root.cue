@@ -42,3 +42,6 @@ kustomizations: $default: "flux-resources": {
     "\(resource.kind):\(resource.metadata.namespace):\(resource.metadata.name)": resource
   }
 }
+
+#fluxResources: "repository:$default": spec: interval: "1m"
+#fluxResources: "kustomization:$default": spec: wait: false
