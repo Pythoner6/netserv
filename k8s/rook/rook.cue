@@ -17,8 +17,8 @@ let namespace = c8s.#Namespace & {
     "pod-security.kubernetes.io/warn": "privileged"
   }
 }
+kustomizations: [_]: #defaultResourceNamespace: namespace
 
-kustomizations: helm: #defaultResourceNamespace: namespace
 kustomizations: helm: "release": {
   ns: namespace
   (appName): helmrelease.#HelmRelease & {
