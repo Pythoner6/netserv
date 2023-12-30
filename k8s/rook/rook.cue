@@ -25,6 +25,7 @@ kustomizations: helm: "release": {
     spec: {
       chart: spec: #Charts["rook-ceph"]
       interval: "10m0s"
+      values: nodeSelector: storage: "yes"
     }
   }
 }
