@@ -37,7 +37,7 @@ kustomizations: cluster: "manifest": {
       dataDirHostPath: "/var/storage/rook",
       placement: all: nodeAffinity: requiredDuringSchedulingIgnoredDuringExecution: nodeSelectorTerms: [{
         matchExpressions: [{
-          key: "ceph"
+          key: "rook"
           operator: "In"
           values: ["yes"]
         }]
