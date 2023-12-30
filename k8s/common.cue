@@ -14,7 +14,7 @@ appName: string
 c8s.#Default & {
   #appName: appName
   #defaultKustomizationNamespace: #FluxNamespace
-  #defaultResourceNamespace: #AppNamespace
+  #defaultResourceNamespace: _ | *#AppNamespace
   #repo: "ghcr.io/pythoner6/netserv"
   #charts: _ @tag(charts)
   #chartsRepo: helmrepository.#HelmRepository & {

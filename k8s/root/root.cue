@@ -8,6 +8,7 @@ import (
   flux "pythoner6.dev/netserv/k8s/flux-components:netserv"
   cm "pythoner6.dev/netserv/k8s/cert-manager:netserv"
   dcsi "pythoner6.dev/netserv/k8s/democratic-csi:netserv"
+  cnpg "pythoner6.dev/netserv/k8s/cnpg:netserv"
 )
 
 appName: "root"
@@ -18,6 +19,7 @@ appName: "root"
   es,
   cm,
   dcsi,
+  cnpg,
 ]
 
 #digests: yaml.Unmarshal({s: string @tag(digests)}.s)

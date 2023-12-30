@@ -103,6 +103,11 @@
           url = "https://github.com/democratic-csi/charts/releases/download/democratic-csi-0.14.3/democratic-csi-0.14.3.tgz";
           digest = "e8dd2d5abd4ab2b84e88ad2875ffeeedb18d144f479f816676fb2adc56d5d4f4";
         };
+        cloudnative-pg.src = utils.fetchurlHexDigest {
+          # renovate: helm=https://cloudnative-pg.github.io/charts package=cloudnative-pg version=0.20.0
+          url = "https://cloudnative-pg.github.io/charts/cloudnative-pg-0.20.0.tgz";
+          digest = "44d55c35d46a08b79c4b158005363ae9b4f07640afede9133c4776000893f786";
+        };
       };
     in {
       packages.${system} = rec {
