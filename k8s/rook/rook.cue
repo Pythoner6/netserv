@@ -4,6 +4,7 @@ import (
   "pythoner6.dev/c8s"
   helmrelease "helm.toolkit.fluxcd.io/helmrelease/v2beta2"
   clusters "ceph.rook.io/cephcluster/v1"
+  objectstores "ceph.rook.io/cephobjectstore/v1"
 )
 
 appName: "rook"
@@ -83,6 +84,23 @@ kustomizations: cluster: "manifest": {
         }]
       },
       disruptionManagement: managePodBudgets: true
+    }
+  }
+  objectstore: objectstores.#CephObjectStore & {
+    spec: {
+      metadataPool: {
+        failureDomain: "host"
+        replicated: size: 3
+      }
+      dataPool: {
+        failureDomain: "host"
+        replicated: size: 3
+      }
+      preservePoolsOnDelete: false
+      gateway: {
+        port: 80
+        instances: 1
+      }
     }
   }
 }
