@@ -2,8 +2,8 @@
   "talos": {
     "datasource": "github-release-attachments",
     "package": "siderolabs/talos",
-    "version": "v1.6.0",
-    "talosctlDigest": "3682def031e9b89e4fe4437b8b7cc9f383781f4c3173be9416cd65bc6e1333e7"
+    "version": "v1.6.1",
+    "talosctlDigest": "6ea7a9cd576c7f60f76e078175179e21e924234c054409fb876642efb9b94610"
   },
   "flux": {
     "datasource": "github-release-attachments",
