@@ -98,6 +98,11 @@
           url = "https://dl.gitea.com/charts/gitea-10.0.2.tgz";
           digest = "0b52d987e0e3a214209d56c5f49b696f7a858aac042ca32d9c28858a762bd41d";
         };
+        democratic-csi.src = utils.fetchurlHexDigest {
+          # renovate: helm=https://democratic-csi.github.io/charts package=democratic-csi version=0.14.3
+          url = "https://github.com/democratic-csi/charts/releases/download/democratic-csi-0.14.3/democratic-csi-0.14.3.tgz";
+          digest = "e8dd2d5abd4ab2b84e88ad2875ffeeedb18d144f479f816676fb2adc56d5d4f4";
+        };
       };
     in {
       packages.${system} = rec {
