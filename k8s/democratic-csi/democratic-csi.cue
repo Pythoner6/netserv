@@ -9,6 +9,8 @@ appName: "democratic-csi"
 
 let storagePath = "/var/storage/democratic-csi"
 
+localHostpath: "local-hostpath"
+
 kustomizations: helm: "release": {
   ns: #AppNamespace & {
     metadata: labels: {
@@ -48,7 +50,7 @@ kustomizations: helm: "release": {
           }
         }
         storageClasses: [{
-          name: "local-hostpath"
+          name: localHostpath
           defaultClass: false
           reclaimPolicy: "Delete"
           volumeBindingMode: "WaitForFirstConsumer"

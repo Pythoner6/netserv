@@ -9,6 +9,7 @@ import (
   cm "pythoner6.dev/netserv/k8s/cert-manager:netserv"
   dcsi "pythoner6.dev/netserv/k8s/democratic-csi:netserv"
   cnpg "pythoner6.dev/netserv/k8s/cnpg:netserv"
+  gitlab "pythoner6.dev/netserv/k8s/gitlab:netserv"
 )
 
 appName: "root"
@@ -20,6 +21,7 @@ appName: "root"
   cm,
   dcsi,
   cnpg,
+  gitlab,
 ]
 
 #digests: yaml.Unmarshal({s: string @tag(digests)}.s)
