@@ -22,6 +22,25 @@ kustomizations: helm: "release": {
           storageCapacity: true
           fsGroupPolicy: "File"
         }
+        controller: {
+          enabled: true
+          strategy: "node"
+          externalProvisioner: extraArgs: [
+            "--leader-election=false",
+            "--node-deployment=true",
+            "--node-deployment-immediate-binding=false",
+            "--feature-gates=Topology=true",
+            "--strict-topology=true",
+            "--enable-capacity=true",
+            "--capacity-ownerref-level=1",
+          ]
+        }
+        externalAttacher: enabled: false
+        externalResizer: enabled: false
+        externalSnapshotter: {
+          enabled: true
+          extraArgs: ["--leader-election=false", "--node-deployment=true"]
+        }
         storageClasses: [{
           name: "local-hostpath"
           defaultClass: false
