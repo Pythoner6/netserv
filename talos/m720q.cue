@@ -5,7 +5,9 @@ package netserv
   if _model == "m720q" {
     _installdisk: "/dev/nvme0n1"
     machine: {
-      nodeLabels: ceph: "yes"
+      nodeLabels: {
+        storage: "yes"
+      }
       disks: [{
         device: "/dev/nvme0n2"
         partitions: [{mountpoint: "/var/storage"}]
