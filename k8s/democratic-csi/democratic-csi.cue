@@ -40,12 +40,12 @@ kustomizations: helm: "release": {
             "--enable-capacity=true",
             "--capacity-ownerref-level=1",
           ]
-        }
-        externalAttacher: enabled: false
-        externalResizer: enabled: false
-        externalSnapshotter: {
-          enabled: false
-          extraArgs: ["--leader-election=false", "--node-deployment=true"]
+          externalAttacher: enabled: false
+          externalResizer: enabled: false
+          externalSnapshotter: {
+            enabled: false
+            extraArgs: ["--leader-election=false", "--node-deployment=true"]
+          }
         }
         storageClasses: [{
           name: "local-hostpath"
