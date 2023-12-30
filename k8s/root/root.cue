@@ -10,6 +10,7 @@ import (
   dcsi "pythoner6.dev/netserv/k8s/democratic-csi:netserv"
   cnpg "pythoner6.dev/netserv/k8s/cnpg:netserv"
   gitlab "pythoner6.dev/netserv/k8s/gitlab:netserv"
+  rook "pythoner6.dev/netserv/k8s/rook:netserv"
 )
 
 appName: "root"
@@ -22,6 +23,7 @@ appName: "root"
   dcsi,
   cnpg,
   gitlab,
+  rook,
 ]
 
 #digests: yaml.Unmarshal({s: string @tag(digests)}.s)

@@ -21,7 +21,7 @@ c8s.#Default & {
     metadata: name: "netserv-ghcr"
     spec: {
       type: "oci"
-      url: "oci://ghcr.io/pythoner6/charts"
+      url: "oci://ghcr.io/pythoner6/charts/foo"
     }
   }
 }
