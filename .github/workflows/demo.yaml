@@ -31,15 +31,15 @@ jobs:
           set -euo pipefail
           ACTOR=${ACTOR,,}
           source tools/scripts/oci_helpers.sh
-          skopeo login -u "$ACTOR" --password-stdin <<< "$TOKEN" --tls-verify "$BASE_URL" 
+          crane auth login -u "$ACTOR" --password-stdin <<< "$TOKEN" "$BASE_URL" 
           readarray -t charts <<< "$(find result/charts -maxdepth 1 -mindepth 1 -type d)"
           for chart in "${charts[@]}"; do
-            skopeo copy --dest-tls-verify "oci:$chart" "docker://$BASE_URL/charts/$(get_chart_name "$chart"):$(get_chart_version "$chart")"
+            crane push "$chart" "$BASE_URL/charts/$(get_chart_name "$chart"):$(get_chart_version "$chart")"
           done
           readarray -t apps <<< "$(find result/apps -maxdepth 1 -mindepth 1 -type d)"
           for app in "${apps[@]}"; do
             if [[ "$app" != "root" ]]; then
-              skopeo copy --dest-tls-verify "oci:$app" "docker://$BASE_URL/netserv/$(get_chart_name "$app")"
+              crane push "$app" "$BASE_URL/netserv/$(get_chart_name "$app")"
             fi
           done
-          skopeo copy --dest-tls-verify "oci:result/apps/root" "docker://$BASE_URL/netserv/$(get_chart_name "result/apps/root")"
+          crane push "result/apps/root" "$BASE_URL/netserv/$(get_chart_name "result/apps/root")"
