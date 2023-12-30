@@ -12,7 +12,7 @@ appName: "gitlab"
 kustomizations: $default: #dependsOn: [dcsi.kustomizations.helm, cnpg.kustomizations.helm]
 kustomizations: $default: manifest: {
   ns: #AppNamespace
-  cluster: clusters.#Cluster & {
+  db: clusters.#Cluster & {
     metadata: name: "gitlab"
     spec: {
       instances: 3
@@ -31,7 +31,7 @@ kustomizations: $default: manifest: {
       }]
     }
   }
-  cluster: clusters.#Cluster & {
+  praefectDb: clusters.#Cluster & {
     metadata: name: "praefect"
     spec: {
       instances: 3
