@@ -33,5 +33,4 @@ kustomizations: $default: "flux-resources": {
   for _, resource in #fluxResources {
     "\(resource.kind):\(resource.metadata.namespace):\(resource.metadata.name)": resource
   }
-  (#ChartsRepo.metadata.name): #ChartsRepo
 }

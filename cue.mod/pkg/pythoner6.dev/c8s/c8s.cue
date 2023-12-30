@@ -139,9 +139,11 @@ ChartsDef=#Charts: {
   #charts: string
   #chartsRepo: helmrepository.#HelmRepository
 
+  let chartsRepo = #chartsRepo & {metadata: namespace: #defaultKustomizationNamespace.metadata.name}
+
   #Charts: ChartsDef & {
     #in: #charts
-    #repo: #chartsRepo
+    #repo: chartsRepo
   }
 
   kustomizations: #Kustomizations & {
@@ -155,5 +157,6 @@ ChartsDef=#Charts: {
     #kustomizations: kustomizations
     #appName: this.#appName
     #namespace: #defaultKustomizationNamespace
+    "$c8s-chart-repo": chartsRepo
   }
 }

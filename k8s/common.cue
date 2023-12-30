@@ -10,13 +10,6 @@ appName: string
 #AppNamespace: c8s.#Namespace & {#name: appName}
 #FluxNamespace: c8s.#Namespace & {#name: "flux-system"}
 
-#ChartsRepo: helmrepository.#HelmRepository & {
-  metadata: name: "netserv-ghcr"
-  spec: {
-    type: "oci"
-    url: "oci://ghcr.io/pythoner6/charts"
-  }
-}
 
 c8s.#Default & {
   #appName: appName
@@ -24,7 +17,13 @@ c8s.#Default & {
   #defaultResourceNamespace: #AppNamespace
   #repo: "ghcr.io/pythoner6/netserv"
   #charts: _ @tag(charts)
-  #chartsRepo: #ChartsRepo
+  #chartsRepo: helmrepository.#HelmRepository & {
+    metadata: name: "netserv-ghcr"
+    spec: {
+      type: "oci"
+      url: "oci://ghcr.io/pythoner6/charts"
+    }
+  }
 }
 
 #Charts: c8s.#Charts
