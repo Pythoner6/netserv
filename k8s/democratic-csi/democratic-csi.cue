@@ -44,7 +44,7 @@ kustomizations: helm: "release": {
         externalAttacher: enabled: false
         externalResizer: enabled: false
         externalSnapshotter: {
-          enabled: true
+          enabled: false
           extraArgs: ["--leader-election=false", "--node-deployment=true"]
         }
         storageClasses: [{
