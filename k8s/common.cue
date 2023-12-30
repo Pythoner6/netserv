@@ -12,7 +12,10 @@ appName: string
 
 #ChartsRepo: helmrepository.#HelmRepository & {
   metadata: name: "netserv-ghcr"
-  spec: url: "oci://ghcr.io/pythoner6/charts"
+  spec: {
+    type: "oci"
+    url: "oci://ghcr.io/pythoner6/charts"
+  }
 }
 
 c8s.#Default & {

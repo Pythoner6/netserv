@@ -10,29 +10,3 @@ package netserv
 appName: "flux"
 
 kustomizations: components: {}
-
-//fluxResources: {
-//  oci: ocirepository.#OCIRepository & {
-//    #Repository
-//    spec: {
-//      interval: "1m0s"
-//      ref: tag: "latest"
-//      url: "oci://ghcr.io/pythoner6/netserv"
-//    }
-//  }
-//  helm: helmrepository.#HelmRepository & {
-//    #HelmRepository
-//    spec: {
-//      type: "oci"
-//      url: "oci://ghcr.io/pythoner6/charts"
-//    }
-//  }
-//  "root": kustomization.#Kustomization & {
-//    spec: {
-//      path: "./"
-//      interval: "10m0s"
-//      prune: true
-//      sourceRef: #Ref & {_obj: #Repository}
-//    }
-//  }
-//}
