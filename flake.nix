@@ -115,7 +115,7 @@
             (cue.fromCrds "gateway-crds" gateway-crds)
           ];
           extraManifests = {
-            flux.components."flux-components.yaml" = flux-manifests;
+            flux-components.components."flux-components.yaml" = flux-manifests;
             cilium.gateway-crds."crds.yaml" = gateway-crds;
           };
         };

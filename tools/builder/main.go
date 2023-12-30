@@ -480,7 +480,7 @@ func generateKustomizationTarData(kustomization cue.Value, extraManifests map[st
     if err != nil { return err }
     data, err := cueyaml.EncodeStream(resourceList)
     if err != nil { return err }
-    files = append(files, Manifest{Name: manifestName, Content: bytes.NewReader(data), Size: int64(len(data))})
+    files = append(files, Manifest{Name: manifestName + ".yaml", Content: bytes.NewReader(data), Size: int64(len(data))})
   }
   for output, input := range extraManifests {
     file, err := os.Open(input)
@@ -494,7 +494,7 @@ func generateKustomizationTarData(kustomization cue.Value, extraManifests map[st
     err = tarWriter.WriteHeader(&tar.Header{
       Size: manifest.Size,
       Mode: 0644,
-      Name: manifest.Name + ".yaml",
+      Name: manifest.Name,
       Format: tar.FormatPAX,
     })
     if err != nil { return err }
