@@ -78,6 +78,17 @@ func bytesDescriptor(data []byte, mediaType string) ociv1.Descriptor {
   }
 }
 
+func bytesDescriptorWithName(data []byte, mediaType, name string) ociv1.Descriptor {
+  return ociv1.Descriptor{
+    MediaType: mediaType,
+    Digest: digest.FromBytes(data),
+    Size: int64(len(data)),
+    Annotations: map[string]string{
+      ociv1.AnnotationRefName: name,
+    },
+  }
+}
+
 func descriptorForArchive(chartArchive string) (ociv1.Descriptor, error) {
   chartDigest, err := fileDigest(chartArchive)
   if err != nil { return ociv1.Descriptor{}, err }
@@ -117,21 +128,6 @@ func generateIndex(manifest ociv1.Descriptor) ([]byte, error) {
   index := ociv1.Index{
     Versioned: oci.Versioned{SchemaVersion: 2},
     Manifests: []ociv1.Descriptor{manifest},
-  }
-
-  data, err := marshalCanonical(index)
-  if err != nil { return nil, err }
-
-  return data, nil
-}
-
-func generateIndexWithName(manifest ociv1.Descriptor, name string) ([]byte, error) {
-  index := ociv1.Index{
-    Versioned: oci.Versioned{SchemaVersion: 2},
-    Manifests: []ociv1.Descriptor{manifest},
-    Annotations: map[string]string{
-      ociv1.AnnotationRefName: name,
-    },
   }
 
   data, err := marshalCanonical(index)
@@ -281,9 +277,9 @@ func WriteOCI(outDir string, name string, content []byte) error {
 
   manifest, err := generateManifest(configDescriptor, contentDescriptor)
   if err != nil { return err }
-  manifestDescriptor := bytesDescriptor(manifest, ociv1.MediaTypeImageManifest)
+  manifestDescriptor := bytesDescriptorWithName(manifest, ociv1.MediaTypeImageManifest, name)
 
-  index, err := generateIndexWithName(manifestDescriptor, name)
+  index, err := generateIndex(manifestDescriptor)
   if err != nil { return err }
 
   layout, err := generateOCILayout()
