@@ -23,6 +23,54 @@ appName: "gitlab"
   }
 })
 
+#BucketSecret: externalsecrets.#ExternalSecret & {
+  #bucket: _
+  #store: _
+  metadata: name: #bucket.metadata.name
+  spec: {
+    secretStoreRef: {
+      name: #store.metadata.name
+      kind: #store.kind
+    }
+    refreshInterval: "0"
+    target: {
+      name: metadata.name
+      deletionPolicy: "Merge"
+      creationPolicy: "Merge"
+      template: {
+        engineVersion: "v2"
+        data:
+          connection: """
+          provider: AWS
+          path_style: true
+          host: \(strconv.Quote(rook.objectStoreHost))
+          endpoint: \(strconv.Quote("http://" + rook.objectStoreHost + ":" + strconv.FormatInt(rook.objectStorePort, 10)))
+          region: ""
+          aws_signature_version: 4
+          aws_access_key_id: {{ .aws_access_key_id | quote }}
+          aws_secret_access_key: {{ .aws_secret_access_key | quote }}
+          """
+      }
+    }
+    data: [
+      {
+        secretKey: "aws_access_key_id"
+        remoteRef: {
+          key: metadata.name
+          property: "AWS_ACCESS_KEY_ID"
+        }
+      },
+      {
+        secretKey: "aws_secret_access_key"
+        remoteRef: {
+          key: metadata.name
+          property: "AWS_SECRET_ACCESS_KEY"
+        }
+      },
+    ]
+  }
+}
+
 kustomizations: $default: #dependsOn: [dcsi.kustomizations.helm, cnpg.kustomizations.helm, rook.kustomizations.cluster]
 kustomizations: $default: manifest: {
   ns: #AppNamespace
@@ -110,57 +158,16 @@ kustomizations: $default: manifest: {
   }
 
   lfsBucket: #BucketClaim & { metadata: name: "git-lfs" }
-  lfsSecret: externalsecrets.#ExternalSecret & {
-    metadata: name: lfsBucket.metadata.name
-    spec: {
-      secretStoreRef: {
-        name: store.metadata.name
-        kind: store.kind
-      }
-      refreshInterval: "0"
-      target: {
-        name: metadata.name
-        deletionPolicy: "Merge"
-        creationPolicy: "Merge"
-        template: {
-          engineVersion: "v2"
-          data:
-            connection: """
-            provider: AWS
-            path_style: true
-            host: \(strconv.Quote(rook.objectStoreHost))
-            endpoint: \(strconv.Quote("http://" + rook.objectStoreHost + ":" + strconv.FormatInt(rook.objectStorePort, 10)))
-            region: ""
-            aws_signature_version: 4
-            aws_access_key_id: {{ .aws_access_key_id | quote }}
-            aws_secret_access_key: {{ .aws_secret_access_key | quote }}
-            """
-        }
-      }
-      data: [
-        {
-          secretKey: "aws_access_key_id"
-          remoteRef: {
-            key: metadata.name
-            property: "AWS_ACCESS_KEY_ID"
-          }
-        },
-        {
-          secretKey: "aws_secret_access_key"
-          remoteRef: {
-            key: metadata.name
-            property: "AWS_SECRET_ACCESS_KEY"
-          }
-        },
-      ]
-    }
-  }
+  lfsSecret: #BucketSecret & { #bucket: lfsBucket, #store: store }
 
   artifactsBucket: #BucketClaim & { metadata: name: "gitlab-artifacts" }
+  artifactsSecret: #BucketSecret & { #bucket: artifactsBucket, #store: store }
 
   uploadsBucket: #BucketClaim & { metadata: name: "gitlab-uploads" }
+  uploadsSecret: #BucketSecret & { #bucket: uploadsBucket, #store: store }
 
   packagesBucket: #BucketClaim & { metadata: name: "gitlab-packages" }
+  packagesSecret: #BucketSecret & { #bucket: packagesBucket, #store: store }
 }
 
 //kustomizations: helm: #dependsOn: [kustomizations["$default"]]
