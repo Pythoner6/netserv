@@ -1,6 +1,7 @@
 package netserv
 
 import (
+  "strconv"
   dcsi "pythoner6.dev/netserv/k8s/democratic-csi:netserv"
   cnpg "pythoner6.dev/netserv/k8s/cnpg:netserv"
   rook "pythoner6.dev/netserv/k8s/rook:netserv"
@@ -118,20 +119,21 @@ kustomizations: $default: manifest: {
       }
       refreshInterval: "0"
       target: {
-        name: metadata.name + "-yaml"
+        name: metadata.name
         deletionPolicy: "Delete"
+        creationPolicy: "Merge"
         template: {
           engineVersion: "v2"
           data:
             connection: """
-              provider: AWS
-              path_style: true
-              host: ""
-              endpoint: ""
-              region: ""
-              aws_signature_version: 4
-              aws_access_key_id: {{ .aws_access_key_id | quote }}
-              aws_secret_access_key: {{ .aws_secret_access_key | quote }}
+            provider: AWS
+            path_style: true
+            host: \(strconv.Quote(rook.objectStoreHost))
+            endpoint: \(strconv.Quote("http://" + rook.objectStoreHost + ":" + strconv.FormatInt(rook.objectStorePort, 10)))
+            region: ""
+            aws_signature_version: 4
+            aws_access_key_id: {{ .aws_access_key_id | quote }}
+            aws_secret_access_key: {{ .aws_secret_access_key | quote }}
             """
         }
       }
@@ -139,14 +141,14 @@ kustomizations: $default: manifest: {
         {
           secretKey: "aws_access_key_id"
           remoteRef: {
-            key: lfsBucket.metadata.name
+            key: metadata.name
             property: "AWS_ACCESS_KEY_ID"
           }
         },
         {
           secretKey: "aws_secret_access_key"
           remoteRef: {
-            key: lfsBucket.metadata.name
+            key: metadata.name
             property: "AWS_SECRET_ACCESS_KEY"
           }
         },

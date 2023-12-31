@@ -116,6 +116,9 @@ kustomizations: cluster: "manifest": {
   }
 }
 
+objectStoreHost: "rook-ceph-rgw-\(kustomizations.cluster.manifest.objectstore.metadata.name).\(namespace.metadata.name).svc"
+objectStorePort: kustomizations.cluster.manifest.objectstore.spec.gateway.port
+
 //kustomizations: objectstore: #dependsOn: [kustomizations.helm]
 //kustomizations: objectstore: "manifest": {
 //}
