@@ -120,7 +120,7 @@ kustomizations: $default: manifest: {
       refreshInterval: "0"
       target: {
         name: metadata.name
-        deletionPolicy: "Delete"
+        deletionPolicy: "Owner"
         creationPolicy: "Merge"
         template: {
           engineVersion: "v2"
