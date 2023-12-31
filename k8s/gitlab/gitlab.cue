@@ -104,7 +104,7 @@ kustomizations: $default: manifest: {
         name: "kube-root-ca.crt"
         key: "ca.crt"
       }
-      auth: serviceAccount: name: "default"
+      auth: serviceAccount: name: storeServiceAccount.metadata.name
     }
   }
 
