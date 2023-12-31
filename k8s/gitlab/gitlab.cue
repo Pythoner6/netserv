@@ -86,7 +86,7 @@ kustomizations: $default: manifest: {
     subjects: [{
       kind: storeServiceAccount.kind
       name: storeServiceAccount.metadata.name
-      apiGroup: "rbac.authorization.k8s.io"
+      apiGroup: ""
     }]
     roleRef: {
       kind: storeRole.kind
