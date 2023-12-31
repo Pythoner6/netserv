@@ -117,6 +117,7 @@ kustomizations: helm: manifest: {
       interval: "10m0s"
       values: {
         global: {
+          edition: "ce"
           hosts: domain: "home.josephmartin.org"
           nodeSelector: storage: "yes"
           gitaly: enabled: true
