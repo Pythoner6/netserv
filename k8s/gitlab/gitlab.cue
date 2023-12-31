@@ -183,6 +183,7 @@ kustomizations: helm: manifest: {
             }
           }
         }
+        certmanager: install: false
         "certmanager-issuer": install: false
         prometheus: install: false
         postgresql: install: false
