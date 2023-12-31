@@ -4,3 +4,8 @@ package v1
   apiVersion: "v1"
   kind: "Namespace"
 }
+
+#ServiceAccount: {
+  apiVersion: "v1"
+  kind: "ServiceAccount"
+}

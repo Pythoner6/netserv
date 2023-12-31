@@ -1,14 +1,12 @@
 package netserv
 
 import (
-  "strconv"
   dcsi "pythoner6.dev/netserv/k8s/democratic-csi:netserv"
   cnpg "pythoner6.dev/netserv/k8s/cnpg:netserv"
   rook "pythoner6.dev/netserv/k8s/rook:netserv"
   clusters "postgresql.cnpg.io/cluster/v1"
-  bucketclaims "objectbucket.io/objectbucketclaim/v1alpha1"
   //secretstores "external-secrets.io/secretstore/v1beta1"
-  externalsecrets "external-secrets.io/externalsecret/v1beta1"
+  helmrelease "helm.toolkit.fluxcd.io/helmrelease/v2beta2"
   corev1 "k8s.io/api/core/v1"
   rbacv1 "k8s.io/api/rbac/v1"
 )
@@ -16,66 +14,20 @@ import (
 appName: "gitlab"
 #Charts: _
 
-#BucketClaim: this=(bucketclaims.#ObjectBucketClaim & {
-  spec: {
-    bucketName: this.metadata.name
-    storageClassName: rook.kustomizations.cluster.manifest.bucketStorageClass.metadata.name
-  }
-})
-
-#BucketSecret: externalsecrets.#ExternalSecret & {
-  #bucket: _
-  #store: _
-  metadata: name: #bucket.metadata.name
-  spec: {
-    secretStoreRef: {
-      name: #store.metadata.name
-      kind: #store.kind
-    }
-    refreshInterval: "0"
-    target: {
-      name: metadata.name
-      deletionPolicy: "Merge"
-      creationPolicy: "Merge"
-      template: {
-        engineVersion: "v2"
-        data:
-          connection: """
-          provider: AWS
-          path_style: true
-          host: \(strconv.Quote(rook.objectStoreHost))
-          endpoint: \(strconv.Quote("http://" + rook.objectStoreHost + ":" + strconv.FormatInt(rook.objectStorePort, 10)))
-          region: ""
-          aws_signature_version: 4
-          aws_access_key_id: {{ .aws_access_key_id | quote }}
-          aws_secret_access_key: {{ .aws_secret_access_key | quote }}
-          """
-      }
-    }
-    data: [
-      {
-        secretKey: "aws_access_key_id"
-        remoteRef: {
-          key: metadata.name
-          property: "AWS_ACCESS_KEY_ID"
-        }
-      },
-      {
-        secretKey: "aws_secret_access_key"
-        remoteRef: {
-          key: metadata.name
-          property: "AWS_SECRET_ACCESS_KEY"
-        }
-      },
-    ]
-  }
+let nodeAffinity = {
+  nodeAffinity: requiredDuringSchedulingIgnoredDuringExecution: nodeSelectorTerms: [{
+    matchExpressions: [{
+      key: "storage"
+      operator: "In"
+      values: ["yes"]
+    }]
+  }]
 }
 
 kustomizations: $default: #dependsOn: [dcsi.kustomizations.helm, cnpg.kustomizations.helm, rook.kustomizations.cluster]
 kustomizations: $default: manifest: {
   ns: #AppNamespace
-  db: clusters.#Cluster & {
-    metadata: name: "gitlab"
+  "gitlab-db": clusters.#Cluster & {
     spec: {
       instances: 3
       maxSyncReplicas: 2
@@ -84,17 +36,10 @@ kustomizations: $default: manifest: {
         storageClass: dcsi.localHostpath
         size: "10Gi"
       }
-      affinity: nodeAffinity: requiredDuringSchedulingIgnoredDuringExecution: nodeSelectorTerms: [{
-        matchExpressions: [{
-          key: "storage"
-          operator: "In"
-          values: ["yes"]
-        }]
-      }]
+      affinity: nodeAffinity
     }
   }
-  praefectDb: clusters.#Cluster & {
-    metadata: name: "praefect"
+  "praefect-db": clusters.#Cluster & {
     spec: {
       instances: 3
       maxSyncReplicas: 2
@@ -103,24 +48,14 @@ kustomizations: $default: manifest: {
         storageClass: dcsi.localHostpath
         size: "1Gi"
       }
-      affinity: nodeAffinity: requiredDuringSchedulingIgnoredDuringExecution: nodeSelectorTerms: [{
-        matchExpressions: [{
-          key: "storage"
-          operator: "In"
-          values: ["yes"]
-        }]
-      }]
+      affinity: nodeAffinity
     }
   }
   storeServiceAccount: corev1.#ServiceAccount & {
-    apiVersion: "v1"
-    kind: "ServiceAccount"
     metadata: name: "bucket-secrets-store"
   }
   // TODO restrict to specific secrets
   storeRole: rbacv1.#Role & {
-    apiVersion: "rbac.authorization.k8s.io/v1"
-    kind: "Role"
     metadata: name: "bucket-secrets-store"
     rules: [{
       apiGroups: [""]
@@ -129,8 +64,6 @@ kustomizations: $default: manifest: {
     }]
   }
   storeRoleBinding: rbacv1.#RoleBinding & {
-    apiVersion: "rbac.authorization.k8s.io/v1"
-    kind: "RoleBinding"
     metadata: name: "bucket-secrets-store"
     subjects: [{
       kind: storeServiceAccount.kind
@@ -144,6 +77,7 @@ kustomizations: $default: manifest: {
     }
   }
   store="bucket-secrets-store": {
+    // CUE MaxFields is broken so the ES CRD doesn't validate right now
     apiVersion: "external-secrets.io/v1beta1"
     kind: "SecretStore"
     spec: provider: kubernetes: {
@@ -170,6 +104,95 @@ kustomizations: $default: manifest: {
   packagesSecret: #BucketSecret & { #bucket: packagesBucket, #store: store }
 }
 
-//kustomizations: helm: #dependsOn: [kustomizations["$default"]]
-//kustomizations: helm: manifest: {
-//}
+let gitlabDbRw = kustomizations["$default"].manifest["gitlab-db"].metadata.name + "-rw"
+let gitlabDbPass = kustomizations["$default"].manifest["gitlab-db"].metadata.name + "-app"
+let praefectDbRw = kustomizations["$default"].manifest["praefect-db"].metadata.name + "-rw"
+let praefectDbPass = kustomizations["$default"].manifest["praefect-db"].metadata.name + "-app"
+
+kustomizations: helm: #dependsOn: [kustomizations["$default"]]
+kustomizations: helm: manifest: {
+  (appName): helmrelease.#HelmRelease & {
+    spec: {
+      chart: spec: #Charts[appName]
+      interval: "10m0s"
+      values: {
+        global: {
+          hosts: domain: "home.josephmartin.org"
+          nodeSelector: storage: "yes"
+          gitaly: enabled: true
+          minio: enabled: false
+          ingress: configureCertmanager: false
+          pages: enabled: false
+          psql: {
+            host: gitlabDbRw
+            database: "app"
+            username: "app"
+            password: {
+              secret: gitlabDbPass
+              key: "password"
+            }
+          }
+          praefect: {
+            enabled: true
+            dbSecret: {
+              secret: praefectDbPass
+              key: "password"
+            }
+            psql: {
+              user: "app"
+              dbName: "app"
+              host: praefectDbRw
+            }
+            virtualStorages: [{
+              name: "default"
+              gitalyReplicas: 3
+              maxUnavailable: 1
+              persistence: {
+                enabled: true
+                size: "50Gi"
+                accessMode: "ReadWriteOnce"
+                storageClass: dcsi.localHostpath
+                defaultReplicationFactor: 3
+              }
+            }]
+          }
+          appConfig: {
+            lfs: {
+              enabled: true
+              proxy_download: true
+              bucket: kustomizations["$default"].manifest.lfsBucket.spec.bucketName
+              connection: secret: kustomizations["$default"].manifest.lfsSecret.metadata.name
+            }
+            artifacts: {
+              enabled: true
+              proxy_download: true
+              bucket: kustomizations["$default"].manifest.artifactsBucket.spec.bucketName
+              connection: secret: kustomizations["$default"].manifest.artifactsSecret.metadata.name
+            }
+            uploads: {
+              enabled: true
+              proxy_download: true
+              bucket: kustomizations["$default"].manifest.uploadsBucket.spec.bucketName
+              connection: secret: kustomizations["$default"].manifest.uploadsSecret.metadata.name
+            }
+            packages: {
+              enabled: true
+              proxy_download: true
+              //bucket: kustomizations["default"].manifest.packagesBucket.spec.bucketName
+              connection: secret: kustomizations["$default"].manifest.packagesSecret.metadata.name
+            }
+          }
+        }
+        "certmanager-issuer": install: false
+        prometheus: install: false
+        postgresql: install: false
+        "gitlab-runner": install: false
+        gitlab: toolbox: enabled: false
+        redis: {
+          master: nodeSelector: storage: "yes"
+          global: storageClass: dcsi.localHostpath
+        }
+      }
+    }
+  }
+}

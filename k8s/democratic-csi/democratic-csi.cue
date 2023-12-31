@@ -52,7 +52,7 @@ kustomizations: helm: "release": {
         storageClasses: [{
           name: localHostpath
           defaultClass: false
-          reclaimPolicy: "Delete"
+          reclaimPolicy: "Retain"
           volumeBindingMode: "WaitForFirstConsumer"
           allowVolumeExpansion: true
         }]
