@@ -118,7 +118,7 @@ kustomizations: $default: manifest: {
       }
       refreshInterval: "0"
       target: {
-        name: metadata.name
+        name: metadata.name + "-yaml"
         deletionPolicy: "Delete"
         template: {
           engineVersion: "v2"
@@ -139,14 +139,14 @@ kustomizations: $default: manifest: {
         {
           secretKey: "aws_access_key_id"
           remoteRef: {
-            key: store.metadata.name
+            key: lfsBucket.metadata.name
             property: "AWS_ACCESS_KEY_ID"
           }
         },
         {
           secretKey: "aws_secret_access_key"
           remoteRef: {
-            key: store.metadata.name
+            key: lfsBucket.metadata.name
             property: "AWS_SECRET_ACCESS_KEY"
           }
         },
