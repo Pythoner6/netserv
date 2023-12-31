@@ -32,6 +32,7 @@ kustomizations: helm: "release": {
   }
 }
 
+#fluxResources: "kustomization:cluster": spec: wait: false
 kustomizations: cluster: #dependsOn: [kustomizations.helm]
 kustomizations: cluster: "manifest": {
   cluster: clusters.#CephCluster & {
