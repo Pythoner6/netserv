@@ -8,8 +8,8 @@ import (
   bucketclaims "objectbucket.io/objectbucketclaim/v1alpha1"
   //secretstores "external-secrets.io/secretstore/v1beta1"
   externalsecrets "external-secrets.io/externalsecret/v1beta1"
-  //corev1 "k8s.io/api/core/v1"
-  //rbacv1 "k8s.io/api/rbac/v1"
+  corev1 "k8s.io/api/core/v1"
+  rbacv1 "k8s.io/api/rbac/v1"
 )
 
 appName: "gitlab"
@@ -63,15 +63,37 @@ kustomizations: $default: manifest: {
       }]
     }
   }
-  //storeServiceAccount: corev1.#ServiceAccount & {
-  //  metadata: name: "bucket-secrets-store"
-  //}
-  //storeRole: rbacv1.#Role & {
-  //  metadata: name: "bucket-secrets-store"
-  //}
-  //storeRoleBinding: rbacv1.#RoleBinding & {
-  //  metadata: name: "bucket-secrets-store"
-  //}
+  storeServiceAccount: corev1.#ServiceAccount & {
+    apiVersion: "v1"
+    kind: "ServiceAccount"
+    metadata: name: "bucket-secrets-store"
+  }
+  // TODO restrict to specific secrets
+  storeRole: rbacv1.#Role & {
+    apiVersion: "rbac.authorization.k8s.io/v1"
+    kind: "Role"
+    metadata: name: "bucket-secrets-store"
+    rules: [{
+      apiGroups: [""]
+      resources: ["secrets"]
+      verbs: ["get", "watch", "list"]
+    }]
+  }
+  storeRoleBinding: rbacv1.#RoleBinding & {
+    apiVersion: "rbac.authorization.k8s.io/v1"
+    kind: "RoleBinding"
+    metadata: name: "bucket-secrets-store"
+    subjects: [{
+      kind: storeServiceAccount.kind
+      name: storeServiceAccount.metadata.name
+      apiGroup: "rbac.authorization.k8s.io"
+    }]
+    roleRef: {
+      kind: storeRole.kind
+      name: storeRole.metadata.name
+      apiGroup: "rbac.authorization.k8s.io"
+    }
+  }
   store="bucket-secrets-store": {
     apiVersion: "external-secrets.io/v1beta1"
     kind: "SecretStore"
