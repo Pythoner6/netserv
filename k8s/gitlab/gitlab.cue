@@ -208,12 +208,15 @@ kustomizations: helm: manifest: {
           master: nodeSelector: storage: "yes"
           global: storageClass: dcsi.localHostpath
         }
-        registry: database: {
-          enabled: true
-          host: registryDbRw
-          user: "app"
-          name: "app"
-          password: secret: registryDbPass
+        registry: {
+          nodeSelector: storage: "yes"
+          database: {
+            enabled: true
+            host: registryDbRw
+            user: "app"
+            name: "app"
+            password: secret: registryDbPass
+          }
         }
       }
     }
