@@ -114,6 +114,9 @@ kustomizations: $default: manifest: {
 
   packagesBucket: #BucketClaim & { metadata: name: "gitlab-packages" }
   packagesSecret: #BucketSecret & { #bucket: packagesBucket, #store: store }
+
+  registryBucket: #BucketClaim & { metadata: name: "gitlab-registry" }
+  registrySecret: #RegistryBucketSecret & { #bucket: registryBucket, #store: store }
 }
 
 let gitlabDbRw = kustomizations["$default"].manifest["gitlab-db"].metadata.name + "-rw"
@@ -209,7 +212,7 @@ kustomizations: helm: manifest: {
           global: storageClass: dcsi.localHostpath
         }
         registry: {
-          nodeSelector: storage: "yes"
+          storage: secret: kustomizations["$default"].manifest.registrySecret.metadata.name
           database: {
             enabled: true
             host: registryDbRw

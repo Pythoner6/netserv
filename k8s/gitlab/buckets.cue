@@ -63,3 +63,51 @@ let objectStoreUrl = "http://\(rook.objectStoreHost):\(strconv.FormatInt(rook.ob
     ]
   }
 }
+
+#RegistryBucketSecret: externalsecrets.#ExternalSecret & {
+  #bucket: _
+  #store: _
+  metadata: name: #bucket.metadata.name
+  spec: {
+    secretStoreRef: {
+      name: #store.metadata.name
+      kind: #store.kind
+    }
+    refreshInterval: "0"
+    target: {
+      name: metadata.name
+      deletionPolicy: "Merge"
+      creationPolicy: "Merge"
+      template: {
+        engineVersion: "v2"
+        data:
+          connection: """
+          s3:
+            v4auth: true
+            regionendpoint: \(strconv.Quote(objectStoreUrl))
+            pathstyle: true
+            region: ""
+            bucket: \(strconv.Quote(#bucket.spec.bucketName))
+            accesskey: {{ .aws_access_key_id | quote }}
+            secretkey: {{ .aws_secret_access_key | quote }}
+          """
+      }
+    }
+    data: [
+      {
+        secretKey: "aws_access_key_id"
+        remoteRef: {
+          key: metadata.name
+          property: "AWS_ACCESS_KEY_ID"
+        }
+      },
+      {
+        secretKey: "aws_secret_access_key"
+        remoteRef: {
+          key: metadata.name
+          property: "AWS_SECRET_ACCESS_KEY"
+        }
+      },
+    ]
+  }
+}
