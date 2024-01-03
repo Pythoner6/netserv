@@ -81,7 +81,7 @@ let objectStoreUrl = "http://\(rook.objectStoreHost):\(strconv.FormatInt(rook.ob
       template: {
         engineVersion: "v2"
         data:
-          connection: """
+          config: """
           s3:
             v4auth: true
             regionendpoint: \(strconv.Quote(objectStoreUrl))
