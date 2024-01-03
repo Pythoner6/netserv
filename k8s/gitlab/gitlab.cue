@@ -51,6 +51,18 @@ kustomizations: $default: manifest: {
       affinity: nodeAffinity
     }
   }
+  "registry-db": clusters.#Cluster & {
+    spec: {
+      instances: 3
+      maxSyncReplicas: 2
+      minSyncReplicas: 2
+      storage: {
+        storageClass: dcsi.localHostpath
+        size: "10Gi"
+      }
+      affinity: nodeAffinity
+    }
+  }
   storeServiceAccount: corev1.#ServiceAccount & {
     metadata: name: "bucket-secrets-store"
   }
@@ -108,6 +120,8 @@ let gitlabDbRw = kustomizations["$default"].manifest["gitlab-db"].metadata.name 
 let gitlabDbPass = kustomizations["$default"].manifest["gitlab-db"].metadata.name + "-app"
 let praefectDbRw = kustomizations["$default"].manifest["praefect-db"].metadata.name + "-rw"
 let praefectDbPass = kustomizations["$default"].manifest["praefect-db"].metadata.name + "-app"
+let registryDbRw = kustomizations["$default"].manifest["registry-db"].metadata.name + "-rw"
+let registryDbPass = kustomizations["$default"].manifest["registry-db"].metadata.name + "-app"
 
 kustomizations: helm: #dependsOn: [kustomizations["$default"]]
 kustomizations: helm: manifest: {
@@ -193,6 +207,13 @@ kustomizations: helm: manifest: {
         redis: {
           master: nodeSelector: storage: "yes"
           global: storageClass: dcsi.localHostpath
+        }
+        registry: database: {
+          enabled: true
+          host: registryDbRw
+          user: "app"
+          name: "app"
+          password: secret: registryDbPass
         }
       }
     }
