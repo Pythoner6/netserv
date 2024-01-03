@@ -86,7 +86,7 @@ let objectStoreUrl = "http://\(rook.objectStoreHost):\(strconv.FormatInt(rook.ob
             v4auth: true
             regionendpoint: \(strconv.Quote(objectStoreUrl))
             pathstyle: true
-            region: ""
+            region: "home"
             bucket: \(strconv.Quote(#bucket.spec.bucketName))
             accesskey: {{ .aws_access_key_id | quote }}
             secretkey: {{ .aws_secret_access_key | quote }}
