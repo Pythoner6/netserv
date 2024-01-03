@@ -212,7 +212,10 @@ kustomizations: helm: manifest: {
           global: storageClass: dcsi.localHostpath
         }
         registry: {
-          storage: secret: kustomizations["$default"].manifest.registrySecret.metadata.name
+          storage: {
+            secret: kustomizations["$default"].manifest.registrySecret.metadata.name
+            redirect: disable: true
+          }
           database: {
             enabled: true
             host: registryDbRw
