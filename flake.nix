@@ -104,9 +104,9 @@
           digest = "0b52d987e0e3a214209d56c5f49b696f7a858aac042ca32d9c28858a762bd41d";
         };
         democratic-csi.src = utils.fetchurlHexDigest {
-          # renovate: helm=https://democratic-csi.github.io/charts package=democratic-csi version=0.14.4
-          url = "https://github.com/democratic-csi/charts/releases/download/democratic-csi-0.14.4/democratic-csi-0.14.4.tgz";
-          digest = "69ad3585c4aa729b11ddf2956d77552cae0be0fb7fd49d5b6265c5b31d7b70b5";
+          # renovate: helm=https://democratic-csi.github.io/charts package=democratic-csi version=0.14.5
+          url = "https://github.com/democratic-csi/charts/releases/download/democratic-csi-0.14.5/democratic-csi-0.14.5.tgz";
+          digest = "3c6a7356beb1e473de9fdfec0ff8e583be3e254fc1b5f7468a5349e3c30083f1";
         };
         cloudnative-pg.src = utils.fetchurlHexDigest {
           # renovate: helm=https://cloudnative-pg.github.io/charts package=cloudnative-pg version=0.20.0
