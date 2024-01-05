@@ -11,6 +11,7 @@ import (
   cnpg "pythoner6.dev/netserv/k8s/cnpg:netserv"
   gitlab "pythoner6.dev/netserv/k8s/gitlab:netserv"
   rook "pythoner6.dev/netserv/k8s/rook:netserv"
+  openldap "pythoner6.dev/netserv/k8s/openldap:netserv"
 )
 
 appName: "root"
@@ -24,6 +25,7 @@ appName: "root"
   cnpg,
   gitlab,
   rook,
+  openldap,
 ]
 
 #digests: yaml.Unmarshal({s: string @tag(digests)}.s)
