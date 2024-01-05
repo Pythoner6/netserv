@@ -9,7 +9,13 @@ appName: "cert-manager"
 
 kustomizations: {
   helm: "release": {
-    ns: #AppNamespace
+    ns: #AppNamespace & {
+      metadata: labels: {
+        "pod-security.kubernetes.io/enforce": "privileged"
+        "pod-security.kubernetes.io/audit": "privileged"
+        "pod-security.kubernetes.io/warn": "privileged"
+      }
+    }
     (appName): helmrelease.#HelmRelease & {
       spec: {
         chart: spec: #Charts[appName]
