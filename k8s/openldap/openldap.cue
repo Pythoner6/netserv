@@ -12,6 +12,7 @@ appName: "openldap"
 kustomizations: {
   $default: #dependsOn: [certmanager.kustomizations["$default"]]
   $default: "manifest": {
+    ns: #AppNamespace
     ldapCaCert="ldap-ca-cert": certs.#Certificate & {
       metadata: {}
       spec: {
