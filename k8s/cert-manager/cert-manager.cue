@@ -14,7 +14,11 @@ kustomizations: {
       spec: {
         chart: spec: #Charts[appName]
         interval: "10m0s"
-        values: installCRDs: true
+        values: {
+          installCRDs: true
+          featureGates: "LiteralCertificateSubject=true"
+          webhook: featureGates: "LiteralCertificateSubject=true"
+        }
       }
     }
     "\(appName)-csi-driver": helmrelease.#HelmRelease & {
