@@ -87,6 +87,11 @@
           url = "https://charts.jetstack.io/charts/cert-manager-v1.13.3.tgz";
           digest = "f30f3e6f7327f171ecb1ad60079df55639ad6469a80f32e5b60667af950455d5";
         };
+        cert-manager-csi-driver.src = utils.fetchurlHexDigest {
+          # renovate: helm=https://charts.jetstack.io package=cert-manager-csi-driver version=v0.6.0
+          url = "https://charts.jetstack.io/charts/cert-manager-csi-driver-v0.6.0.tgz";
+          digest = "10e938d3cc27919970d19871c1f2da2e591a6a85630979e2166600c88d3f4946";
+        };
         rook.crdValues."crds.enable" = true;
         rook.src  = utils.fetchurlHexDigest {
           # renovate: helm=https://charts.rook.io/release package=rook-ceph version=v1.13.1
@@ -138,6 +143,25 @@
           name = "oci";
           inherit charts;
           src = default;
+        };
+        openldap = pkgs.dockerTools.buildLayeredImage {
+          name = "openldap";
+          #config.Cmd = let openldap = pkgs.openldap.overrideAttrs (final: prev: {configureFlags = prev.configureFlags ++ ["--enable-syncprov"];}); in ["${openldap}/libexec/slapd" "-d" "-1" "-F" "/config" "-h" "ldap://0.0.0.0/"];
+          #config.Cmd = ["${pkgs.openldap}/libexec/slapd" "-d" "-1" "-F" "/config" "-h" "ldap://0.0.0.0/"];
+          #config.Entrypoint = ["${pkgs.bash}/bin/bash" "-c" "\"${pkgs.openldap}/libexec/slapd -d -1 -F /config -h ldap://$1/\""];
+          config.Entrypoint = [(pkgs.stdenv.mkDerivation {
+            name = "entrypoint.sh";
+            dontUnpack = true;
+            installPhase = ''
+              cat <<'EOF' > "$out"
+              #!${pkgs.bash}/bin/bash
+              echo "$@"
+              set -x
+              exec ${pkgs.openldap}/libexec/slapd -d -1 -F /config -h "$1"
+              EOF
+              chmod +x $out
+            '';
+          })];
         };
       };
       devShells.${system} = {

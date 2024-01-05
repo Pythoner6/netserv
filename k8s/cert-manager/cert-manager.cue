@@ -17,6 +17,12 @@ kustomizations: {
         values: installCRDs: true
       }
     }
+    "\(appName)-csi-driver": helmrelease.#HelmRelease & {
+      spec: {
+        chart: spec: #Charts["\(appName)-csi-driver"]
+        interval: "10m0s"
+      }
+    }
   }
   $default: #dependsOn: [helm]
   $default: "issuers": {
