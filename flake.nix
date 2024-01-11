@@ -94,9 +94,9 @@
         };
         rook.crdValues."crds.enable" = true;
         rook.src  = utils.fetchurlHexDigest {
-          # renovate: helm=https://charts.rook.io/release package=rook-ceph version=v1.13.1
-          url = "https://charts.rook.io/release/rook-ceph-v1.13.1.tgz";
-          digest = "efa4edae5dac9de312a1ef235c0b616a7ae5477179013c4df866bd6e1d60e2fa";
+          # renovate: helm=https://charts.rook.io/release package=rook-ceph version=v1.13.2
+          url = "https://charts.rook.io/release/rook-ceph-v1.13.2.tgz";
+          digest = "a95e5443327b0885bb9f2f1d014fc904514cf6d0d4983dcb2e1db5d359be6a15";
         };
         gitea.src = utils.fetchurlHexDigest {
           # renovate: helm=https://dl.gitea.com/charts package=gitea version=10.1.0
