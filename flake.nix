@@ -71,9 +71,9 @@
 
       charts = cue.charts {
         cilium.src = utils.fetchurlHexDigest {
-          # renovate: helm=https://helm.cilium.io package=cilium version=1.15.0-rc.0
-          url = "https://helm.cilium.io/cilium-1.15.0-rc.0.tgz";
-          digest = "4ca544a0cb4be2bc769dd556fb477fc1ea78bd6ef046e3a49083e0e9c30de963";
+          # renovate: helm=https://helm.cilium.io package=cilium version=1.15.0-rc.1
+          url = "https://helm.cilium.io/cilium-1.15.0-rc.1.tgz";
+          digest = "62c98b5619f8b14e8121ea4fe1f4fda5dfc59f42f16f41a5c7357ef0be540e5d";
         };
         external-secrets.crdValues."installCRDs" = true;
         external-secrets.src = utils.fetchurlHexDigest {
