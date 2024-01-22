@@ -99,9 +99,9 @@
           digest = "efa4edae5dac9de312a1ef235c0b616a7ae5477179013c4df866bd6e1d60e2fa";
         };
         gitea.src = utils.fetchurlHexDigest {
-          # renovate: helm=https://dl.gitea.com/charts package=gitea version=10.0.2
-          url = "https://dl.gitea.com/charts/gitea-10.0.2.tgz";
-          digest = "0b52d987e0e3a214209d56c5f49b696f7a858aac042ca32d9c28858a762bd41d";
+          # renovate: helm=https://dl.gitea.com/charts package=gitea version=10.1.0
+          url = "https://dl.gitea.com/charts/gitea-10.1.0.tgz";
+          digest = "0a83ad3d67920a2e322307b5210fb3609f41ea4bd826b2798b05d0533e1d9cad";
         };
         democratic-csi.src = utils.fetchurlHexDigest {
           # renovate: helm=https://democratic-csi.github.io/charts package=democratic-csi version=0.14.5
