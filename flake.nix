@@ -88,9 +88,9 @@
           digest = "f30f3e6f7327f171ecb1ad60079df55639ad6469a80f32e5b60667af950455d5";
         };
         cert-manager-csi-driver.src = utils.fetchurlHexDigest {
-          # renovate: helm=https://charts.jetstack.io package=cert-manager-csi-driver version=v0.6.0
-          url = "https://charts.jetstack.io/charts/cert-manager-csi-driver-v0.6.0.tgz";
-          digest = "10e938d3cc27919970d19871c1f2da2e591a6a85630979e2166600c88d3f4946";
+          # renovate: helm=https://charts.jetstack.io package=cert-manager-csi-driver version=v0.7.0
+          url = "https://charts.jetstack.io/charts/cert-manager-csi-driver-v0.7.0.tgz";
+          digest = "ad29c0f7277495978b9b407f2a47dec843b4f418dfdd16e6e990cd44f4672c42";
         };
         rook.crdValues."crds.enable" = true;
         rook.src  = utils.fetchurlHexDigest {
