@@ -149,6 +149,22 @@ kustomizations: helm: manifest: {
               "cert-manager.io/cluster-issuer": certmanager.kustomizations.$default.issuers.letsencrypt.metadata.name
             }
           }
+          email: {
+            display_name: "GitLab"
+            from: "gitlab@josephmartin.org"
+            reply_to: "noreply@josephmartin.org"
+          }
+          smtp: {
+            enabled: true
+            address: "smtp.mail.us-east-1.awsapps.com"
+            tls: true
+            authentication: "plain"
+            user_name: "josephm"
+            password: {
+              secret: "gitlab-email-secret"
+              key: "password"
+            }
+          }
           pages: enabled: false
           psql: {
             host: gitlabDbRw
