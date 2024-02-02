@@ -10,6 +10,7 @@ import (
   helmrelease "helm.toolkit.fluxcd.io/helmrelease/v2beta2"
   corev1 "k8s.io/api/core/v1"
   rbacv1 "k8s.io/api/rbac/v1"
+  "pythoner6.dev/c8s"
 )
 
 appName: "gitlab"
@@ -28,6 +29,7 @@ let nodeAffinity = {
 kustomizations: $default: #dependsOn: [dcsi.kustomizations.helm, cnpg.kustomizations.helm, rook.kustomizations.cluster]
 kustomizations: $default: manifest: {
   ns: #AppNamespace
+  runnerNs: c8s.#Namespace & {#name: "gitlab-runners"}
   "gitlab-db": clusters.#Cluster & {
     spec: {
       instances: 3
@@ -217,6 +219,15 @@ kustomizations: helm: manifest: {
           replicas: 3
           nodeSelector: storage: "yes"
           unregisterRunners: true
+          runners: config: """
+            [[runners]]
+              [runners.kubernetes]
+                namespace = "\(kustomizations.$default.manifest.runnerNs.metadata.name)"
+                image = "alpine"
+              [runners.kubernetes.node_selector]
+                "kubernetes.io/arch" = "amd64"
+                "kubernetes.io/os" = "linux"
+          """
         }
         gitlab: {
           webservice: ingress: tls: secretName: "\(this.metadata.name)-gitlab-tls"
