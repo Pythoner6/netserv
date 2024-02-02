@@ -1,5 +1,0 @@
-{
-  "extends": "./tsconfig",
-  "include": ["imports/**/*.ts"],
-  "exclude": []
-}

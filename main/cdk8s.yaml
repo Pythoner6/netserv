@@ -1,8 +1,0 @@
-language: typescript
-app: node main.js
-imports:
-  - dist-deps/tidb.k8s.yaml
-  - dist-deps/rook.k8s.yaml
-  - dist-deps/metallb.k8s.yaml
-  - dist-deps/external-secrets.k8s.yaml
-  - dist-deps/traefik.k8s.yaml
