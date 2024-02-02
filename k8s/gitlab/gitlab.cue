@@ -216,6 +216,7 @@ kustomizations: helm: manifest: {
           install: true
           replicas: 3
           nodeSelector: storage: "yes"
+          unregisterRunners: true
         }
         gitlab: {
           webservice: ingress: tls: secretName: "\(this.metadata.name)-gitlab-tls"
