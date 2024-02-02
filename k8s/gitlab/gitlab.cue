@@ -212,7 +212,11 @@ kustomizations: helm: manifest: {
         "certmanager-issuer": install: false
         prometheus: install: false
         postgresql: install: false
-        "gitlab-runner": install: true
+        "gitlab-runner": {
+          install: true
+          replicas: 3
+          nodeSelector: storage: yes
+        }
         gitlab: {
           webservice: ingress: tls: secretName: "\(this.metadata.name)-gitlab-tls"
           kas: ingress: tls: secretName: "\(this.metadata.name)-kas-tls"
