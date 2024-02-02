@@ -4,6 +4,7 @@ import (
   dcsi "pythoner6.dev/netserv/k8s/democratic-csi:netserv"
   cnpg "pythoner6.dev/netserv/k8s/cnpg:netserv"
   rook "pythoner6.dev/netserv/k8s/rook:netserv"
+  certmanager "pythoner6.dev/netserv/k8s/cert-manager:netserv"
   clusters "postgresql.cnpg.io/cluster/v1"
   //secretstores "external-secrets.io/secretstore/v1beta1"
   helmrelease "helm.toolkit.fluxcd.io/helmrelease/v2beta2"
@@ -128,7 +129,7 @@ let registryDbPass = kustomizations["$default"].manifest["registry-db"].metadata
 
 kustomizations: helm: #dependsOn: [kustomizations["$default"]]
 kustomizations: helm: manifest: {
-  (appName): helmrelease.#HelmRelease & {
+  (appName): this=(helmrelease.#HelmRelease & {
     spec: {
       chart: spec: #Charts[appName]
       interval: "10m0s"
@@ -139,7 +140,13 @@ kustomizations: helm: manifest: {
           nodeSelector: storage: "yes"
           gitaly: enabled: true
           minio: enabled: false
-          ingress: configureCertmanager: false
+          ingress: {
+            configureCertmanager: false
+            annotations: {
+              "kubernetes.io/tls-acme": true
+              "cert-manager.io/cluster-issuer": certmanager.kustomizations.$default.issuers.letsencrypt.metadata.name
+            }
+          }
           pages: enabled: false
           psql: {
             host: gitlabDbRw
@@ -201,17 +208,22 @@ kustomizations: helm: manifest: {
             }
           }
         }
-        certmanager: install: false
+        "certmanager": install: false
         "certmanager-issuer": install: false
         prometheus: install: false
         postgresql: install: false
         "gitlab-runner": install: false
-        gitlab: toolbox: enabled: false
+        gitlab: {
+          webservice: ingress: tls: secretName: "\(this.metadata.name)-gitlab-tls"
+          kas: ingress: tls: secretName: "\(this.metadata.name)-kas-tls"
+          toolbox: enabled: false
+        }
         redis: {
           master: nodeSelector: storage: "yes"
           global: storageClass: dcsi.localHostpath
         }
         registry: {
+          ingress: tls: secretName: "\(this.metadata.name)-registry-tls"
           storage: {
             secret: kustomizations["$default"].manifest.registrySecret.metadata.name
             redirect: disable: true
@@ -226,5 +238,5 @@ kustomizations: helm: manifest: {
         }
       }
     }
-  }
+  })
 }
