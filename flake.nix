@@ -97,9 +97,9 @@
           };
           rook.crdValues."crds.enable" = true;
           rook.src  = utils.fetchurlHexDigest {
-            # renovate: helm=https://charts.rook.io/release package=rook-ceph version=v1.13.2
-            url = "https://charts.rook.io/release/rook-ceph-v1.13.2.tgz";
-            digest = "a95e5443327b0885bb9f2f1d014fc904514cf6d0d4983dcb2e1db5d359be6a15";
+            # renovate: helm=https://charts.rook.io/release package=rook-ceph version=v1.13.3
+            url = "https://charts.rook.io/release/rook-ceph-v1.13.3.tgz";
+            digest = "e73b48b91ab9b5f80bb2961fea4203057c84a26945aadcf75bf0d0075d3babdb";
           };
           democratic-csi.src = utils.fetchurlHexDigest {
             # renovate: helm=https://democratic-csi.github.io/charts package=democratic-csi version=0.14.5
