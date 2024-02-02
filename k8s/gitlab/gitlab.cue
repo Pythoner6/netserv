@@ -215,7 +215,7 @@ kustomizations: helm: manifest: {
         "gitlab-runner": {
           install: true
           replicas: 3
-          nodeSelector: storage: yes
+          nodeSelector: storage: "yes"
         }
         gitlab: {
           webservice: ingress: tls: secretName: "\(this.metadata.name)-gitlab-tls"
