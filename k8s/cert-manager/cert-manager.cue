@@ -39,6 +39,18 @@ kustomizations: {
     "self-signed": clusterissuer.#ClusterIssuer & {
       spec: selfSigned: {}
     }
+    "letsencrypt": this=(clusterissuer.#ClusterIssuer & {
+      spec: acme: {
+        email: "joseph@josephmartin.org"
+        server: "https://acme-v02.api.letsencrypt.org/directory"
+        privateKeySecretRef: {
+          name: "\(this.metadata.name)-key"
+        }
+        solvers: [{
+          dns01: digitalocean: tokenSecretRef: { name: "digitalocean-token", key: "access-token" }
+        }]
+      }
+    })
   }
 }
 

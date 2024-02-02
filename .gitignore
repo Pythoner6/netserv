@@ -9,3 +9,8 @@ result
 .ghtoken
 cue.mod/gen
 secrets*.yaml
+.gradle
+.classpath
+.factorypath
+.settings
+.project
