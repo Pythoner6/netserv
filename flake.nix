@@ -86,9 +86,9 @@
           };
           cert-manager.crdValues."installCRDs" = true;
           cert-manager.src = utils.fetchurlHexDigest {
-            # renovate: helm=https://charts.jetstack.io package=cert-manager version=v1.13.3
-            url = "https://charts.jetstack.io/charts/cert-manager-v1.13.3.tgz";
-            digest = "f30f3e6f7327f171ecb1ad60079df55639ad6469a80f32e5b60667af950455d5";
+            # renovate: helm=https://charts.jetstack.io package=cert-manager version=v1.14.1
+            url = "https://charts.jetstack.io/charts/cert-manager-v1.14.1.tgz";
+            digest = "d39a5b52e3ab28bb04891fa2591b8c69ae47e8d0f9a2162dc3961c22d7ff07ef";
           };
           cert-manager-csi-driver.src = utils.fetchurlHexDigest {
             # renovate: helm=https://charts.jetstack.io package=cert-manager-csi-driver version=v0.7.0
