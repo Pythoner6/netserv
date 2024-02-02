@@ -219,6 +219,9 @@ kustomizations: helm: manifest: {
           replicas: 3
           nodeSelector: storage: "yes"
           unregisterRunners: true
+          rbac:
+            create: true
+            clusterWideAccess: true
           runners: config: """
             [[runners]]
               [runners.kubernetes]
