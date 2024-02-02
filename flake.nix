@@ -101,11 +101,6 @@
             url = "https://charts.rook.io/release/rook-ceph-v1.13.2.tgz";
             digest = "a95e5443327b0885bb9f2f1d014fc904514cf6d0d4983dcb2e1db5d359be6a15";
           };
-          gitea.src = utils.fetchurlHexDigest {
-            # renovate: helm=https://dl.gitea.com/charts package=gitea version=10.1.1
-            url = "https://dl.gitea.com/charts/gitea-10.1.1.tgz";
-            digest = "30ee2a52c07e6fc15be8a5506e43fa06bcc8b765d1ccc9f6e3fe4d7df433c538";
-          };
           democratic-csi.src = utils.fetchurlHexDigest {
             # renovate: helm=https://democratic-csi.github.io/charts package=democratic-csi version=0.14.5
             url = "https://github.com/democratic-csi/charts/releases/download/democratic-csi-0.14.5/democratic-csi-0.14.5.tgz";
