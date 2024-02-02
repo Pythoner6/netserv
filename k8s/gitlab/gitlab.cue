@@ -157,6 +157,7 @@ kustomizations: helm: manifest: {
           smtp: {
             enabled: true
             address: "smtp.mail.us-east-1.awsapps.com"
+            port: 465
             tls: true
             authentication: "plain"
             user_name: "josephm"
