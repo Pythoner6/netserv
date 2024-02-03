@@ -29,7 +29,14 @@ let nodeAffinity = {
 kustomizations: $default: #dependsOn: [dcsi.kustomizations.helm, cnpg.kustomizations.helm, rook.kustomizations.cluster]
 kustomizations: $default: manifest: {
   ns: #AppNamespace
-  runnerNs: c8s.#Namespace & {#name: "gitlab-runners"}
+  runnerNs: c8s.#Namespace & {
+    #name: "gitlab-runners"
+    metadata: labels: {
+      "pod-security.kubernetes.io/enforce": "privileged"
+      "pod-security.kubernetes.io/audit": "privileged"
+      "pod-security.kubernetes.io/warn": "privileged"
+    }
+  }
   "gitlab-db": clusters.#Cluster & {
     spec: {
       instances: 3
@@ -245,6 +252,7 @@ kustomizations: helm: manifest: {
               [runners.kubernetes]
                 namespace = "\(kustomizations.$default.manifest.runnerNs.metadata.name)"
                 image = "alpine"
+                privileged = true
               [runners.kubernetes.node_selector]
                 "kubernetes.io/arch" = "amd64"
                 "kubernetes.io/os" = "linux"
