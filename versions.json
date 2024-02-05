@@ -8,7 +8,7 @@
   "flux": {
     "datasource": "github-release-attachments",
     "package": "fluxcd/flux2",
-    "version": "v2.2.2",
-    "digest": "292945a94ae370b91fe004e1f41b16063fc87371a61a1fd29958dfd959140a60"
+    "version": "v2.2.3",
+    "digest": "9a705df552df5ac638f93d7fc43d9d8cda6a78f01a16736ae6f355f4a84ebdb3"
   }
 }
