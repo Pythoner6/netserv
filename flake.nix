@@ -107,9 +107,9 @@
             digest = "3c6a7356beb1e473de9fdfec0ff8e583be3e254fc1b5f7468a5349e3c30083f1";
           };
           cloudnative-pg.src = utils.fetchurlHexDigest {
-            # renovate: helm=https://cloudnative-pg.github.io/charts package=cloudnative-pg version=0.20.0
-            url = "https://cloudnative-pg.github.io/charts/cloudnative-pg-0.20.0.tgz";
-            digest = "44d55c35d46a08b79c4b158005363ae9b4f07640afede9133c4776000893f786";
+            # renovate: helm=https://cloudnative-pg.github.io/charts package=cloudnative-pg version=0.20.1
+            url = "https://cloudnative-pg.github.io/charts/cloudnative-pg-0.20.1.tgz";
+            digest = "c9fd95e3a56241d99f6a27f801488e6d70dfdd9bcd0e49420f28847d9377414d";
           };
           gitlab.src = utils.fetchurlHexDigest {
             # renovate: helm=https://charts.gitlab.io package=gitlab version=7.8.1
