@@ -12,6 +12,7 @@ import (
   gitlab "pythoner6.dev/netserv/k8s/gitlab:netserv"
   rook "pythoner6.dev/netserv/k8s/rook:netserv"
   openldap "pythoner6.dev/netserv/k8s/openldap:netserv"
+  attic "pythoner6.dev/netserv/k8s/attic:netserv"
 )
 
 appName: "root"
@@ -26,6 +27,7 @@ appName: "root"
   gitlab,
   rook,
   openldap,
+  attic,
 ]
 
 #digests: yaml.Unmarshal({s: string @tag(digests)}.s)
