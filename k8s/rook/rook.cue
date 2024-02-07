@@ -2,14 +2,19 @@ package netserv
 
 import (
   "pythoner6.dev/c8s"
+  certmanager "pythoner6.dev/netserv/k8s/cert-manager:netserv"
   helmrelease "helm.toolkit.fluxcd.io/helmrelease/v2beta2"
   clusters "ceph.rook.io/cephcluster/v1"
   objectstores "ceph.rook.io/cephobjectstore/v1"
   storagev1 "k8s.io/api/storage/v1"
+  certificates "cert-manager.io/certificate/v1"
+  gateways "gateway.networking.k8s.io/gateway/v1"
+  httproutes "gateway.networking.k8s.io/httproute/v1"
 )
 
 appName: "rook"
 #Charts: _
+rgwDomain: "objects.home.josephmartin.org"
 
 let namespace = c8s.#Namespace & {
   #name: "rook-system"
@@ -101,6 +106,8 @@ kustomizations: cluster: "manifest": {
       preservePoolsOnDelete: false
       gateway: {
         port: 80
+        securePort: 443
+        sslCertificateRef: rgwCert.spec.secretName
         instances: 1
       }
     }
@@ -112,6 +119,49 @@ kustomizations: cluster: "manifest": {
     parameters: {
       objectStoreName: objectstore.metadata.name
       objectStoreNamespace: objectstore.metadata.namespace
+    }
+  }
+  rgwCert="rgw-cert": this=(certificates.#Certificate & {
+    spec: {
+      secretName: this.metadata.name
+      dnsNames: [rgwDomain]
+      issuerRef: {
+        name: certmanager.kustomizations.$default.issuers.letsencrypt.metadata.name
+        kind: certmanager.kustomizations.$default.issuers.letsencrypt.kind
+      }
+    }
+  })
+  gateway: gateways.#Gateway & {
+    spec: {
+      gatewayClassName: "cilium"
+      listeners: [{
+        name: "https"
+        protocol: "HTTPS"
+        port: 443
+        hostname: rgwDomain
+        tls: certificateRefs: [{
+          kind: "Secret"
+          name: rgwCert.spec.secretName
+        }]
+      }]
+    }
+  }
+  route: httproutes.#HTTPRoute & {
+    spec: {
+      parentRefs: [{ name: gateway.metadata.name }]
+      hostnames: [rgwDomain]
+      rules: [{
+        matches: [{
+          path: {
+            type: "PathPrefix"
+            value: "/"
+          }
+        }]
+        backendRefs: [{
+          name: "rook-ceph-rgw-\(objectstore.metadata.name).\(kustomizations.helm.release.ns.metadata.name).svc"
+          port: 80
+        }]
+      }]
     }
   }
 }
