@@ -112,9 +112,9 @@
             digest = "c9fd95e3a56241d99f6a27f801488e6d70dfdd9bcd0e49420f28847d9377414d";
           };
           gitlab.src = utils.fetchurlHexDigest {
-            # renovate: helm=https://charts.gitlab.io package=gitlab version=7.8.1
-            url = "https://gitlab-charts.s3.amazonaws.com/gitlab-7.8.1.tgz";
-            digest = "cd7915bb9b0b00059ee1f900a4801608c551fd1797986e2842bad263790ff1bb";
+            # renovate: helm=https://charts.gitlab.io package=gitlab version=7.8.2
+            url = "https://gitlab-charts.s3.amazonaws.com/gitlab-7.8.2.tgz";
+            digest = "a17344e044350fd37da4a2acdaf61eea7b6e77ee214a955424b8d164ff251e5e";
           };
         };
       in {
