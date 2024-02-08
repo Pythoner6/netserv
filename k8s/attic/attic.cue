@@ -43,9 +43,9 @@ kustomizations: $default: "manifest": {
     metadata: name: "attic-server"
     data: "gen-config.sh": """
       cat <<EOF > /config/server.toml
+
       api-endpoint = "https://attic.home.josephmartin.org/"
       token-hs256-secret-base64 = "$(cat /secrets/password)"
-
       [database]
       [chunking]
       nar-size-threshold = 65536 # chunk files that are 64 KiB or larger
@@ -189,6 +189,17 @@ kustomizations: $default: "manifest": {
       parentRefs: [{ name: gateway.metadata.name }]
       hostnames: [domain]
       rules: [{
+        matches: [{
+          path: {
+            type: "Exact"
+            value: "/_token"
+          }
+        }]
+        backendRefs: [{
+          name: "attic-token-service"
+          port: 80
+        }]
+      },{
         matches: [{
           path: {
             type: "PathPrefix"

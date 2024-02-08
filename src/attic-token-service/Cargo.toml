@@ -1,0 +1,23 @@
+[package]
+name = "attic-token-service"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+attic = { git = "https://github.com/Pythoner6/attic.git", branch = "watch-exec", default-features = false }
+attic-token = { git = "https://github.com/Pythoner6/attic.git", branch = "watch-exec" }
+openidconnect = "3.4.0"
+#tokio = { version = "^1.36.0", features = [ "rt-multi-thread", "macros" ] }
+anyhow = "1.0"
+actix-web = "4"
+actix-web-httpauth = "0.8.1"
+serde = "1.0"
+serde_json = "1.0"
+chrono = "0.4"
+base64 = "0.21"
+
+[profile.release]
+opt-level = "z"
+strip = true
+lto = true
+codegen-units = 1

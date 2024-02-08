@@ -218,10 +218,26 @@
               rsync -r --exclude=kubernetes.json build/kubernetes/ $crds/
             '';
           });
+          attic-token-service = pkgs.rustPlatform.buildRustPackage {
+            name = "attic-token-service";
+            src = ./src/attic-token-service;
+            cargoLock = {
+              lockFile = ./src/attic-token-service/Cargo.lock;
+              outputHashes = {
+                "attic-0.1.0" = "sha256-+ACjzPhs0ejAmKMiAM/QGooRt5oUBBm3HQTD59R9rS4=";                
+                "nix-base32-0.1.2-alpha.0" = "sha256-wtPWGOamy3+ViEzCxMSwBcoR4HMMD0t8eyLwXfCDFdo=";
+              };
+            };
+          };
+          attic-token-service-image = pkgs.dockerTools.buildLayeredImage {
+            name = "attic-token-service-image";
+            contents = [ attic-token-service ];
+            config.Cmd = [ "attic-token-service" ];
+          };
         };
         devShells = {
           default = pkgs.mkShell {
-            buildInputs = with pkgs; [ pkgs.cue pkgs.timoni postgresql jq nodejs nodePackages.npm typescript kubernetes-helm flux umoci skopeo weave-gitops yq-go go xxd talosctl crane openldap operator-sdk jdk19 maven gradle ];
+            buildInputs = with pkgs; [ pkgs.cue pkgs.timoni postgresql jq nodejs nodePackages.npm typescript kubernetes-helm flux umoci skopeo weave-gitops yq-go go xxd talosctl crane openldap operator-sdk jdk19 maven gradle pkgs.cargo pkgs.rustc ];
           };
           push = pkgs.mkShell {
             buildInputs = with pkgs; [ crane ];
