@@ -56,6 +56,15 @@ ChartsDef=#Charts: {
   }
 }
 
+ImagesDef=#Images: {
+  #in: string
+  for name, digest in yaml.Unmarshal(#in) & {[_]: string} {
+    (name): {
+      "digest": digest
+    }
+  }
+}
+
 #Namespace: corev1.#Namespace & {
   #name: string
   metadata: name: #name
@@ -137,6 +146,7 @@ ChartsDef=#Charts: {
   #defaultResourceNamespace: #Namespace
   #repo: string
   #charts: string
+  #images: string
   #chartsRepo: helmrepository.#HelmRepository
 
   let chartsRepo = #chartsRepo & {metadata: namespace: #defaultKustomizationNamespace.metadata.name}
@@ -144,6 +154,10 @@ ChartsDef=#Charts: {
   #Charts: ChartsDef & {
     #in: #charts
     #repo: chartsRepo
+  }
+
+  #Images: ImagesDef & {
+    #in: #images
   }
 
   kustomizations: #Kustomizations & {

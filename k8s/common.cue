@@ -17,6 +17,7 @@ c8s.#Default & {
   #defaultResourceNamespace: _ | *#AppNamespace
   #repo: "ghcr.io/pythoner6/netserv"
   #charts: _ @tag(charts)
+  #images: _ @tag(images)
   #chartsRepo: helmrepository.#HelmRepository & {
     metadata: name: "netserv-ghcr"
     spec: {
@@ -27,4 +28,5 @@ c8s.#Default & {
 }
 
 #Charts: c8s.#Charts
+#Images: c8s.#Images
 #fluxResources: c8s.#FluxResources

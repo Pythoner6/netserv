@@ -47,10 +47,10 @@
     vendorHash = "sha256-xuuTZAA429diTa0b+bcuPWz0v2kcA1OpAYwQGuQLpEg=";
   };
 
-  synthApp = { name, src, appPath, chartIndex, cuePackageName, extraManifests, cueDefinitions, apps ? [] }:
+  synthApp = { name, src, appPath, chartIndex, imageIndex, cuePackageName, extraManifests, cueDefinitions, apps ? [] }:
   let
     inputs = {
-      inherit chartIndex cuePackageName cueDefinitions extraManifests apps;
+      inherit chartIndex imageIndex cuePackageName cueDefinitions extraManifests apps;
       path = appPath;
     };
   in pkgs.stdenv.mkDerivation {
@@ -85,10 +85,16 @@ in rec {
     };
   };
 
-  synth = { name, src, rootAppName, appsSubdir ? ".", charts, cuePackageName ? name, extraManifests, extraDefinitions } @ args: 
+  synth = { name, src, rootAppName, appsSubdir ? ".", charts, cuePackageName ? name, extraManifests, extraDefinitions, images } @ args: 
   let
+    imageIndex = pkgs.stdenv.mkDerivation {
+      name = "image-index";
+      dontUnpack = true;
+      nativeBuildInputs = [ pkgs.jq ];
+      installPhase = "${./scripts/build_image_index.sh} <<< ${serialize images}";
+    };
     apps = builtins.mapAttrs (appName: v: synthApp {
-      inherit src cuePackageName;
+      inherit src cuePackageName imageIndex;
       name = appName;
       appPath = "${appsSubdir}/${appName}";
       cueDefinitions = [fromK8s] ++ extraDefinitions ++ charts.cueDefinitions;
@@ -96,7 +102,7 @@ in rec {
       extraManifests = getOpt args.extraManifests appName null;
     }) (pkgs.lib.attrsets.filterAttrs (n: v: v == "directory" && n != "cue.mod" && n != rootAppName) (builtins.readDir "${src}/${appsSubdir}"));
     rootApp = synthApp {
-      inherit src cuePackageName;
+      inherit src cuePackageName imageIndex;
       name = rootAppName;
       appPath = "${appsSubdir}/${rootAppName}";
       cueDefinitions = [fromK8s] ++ extraDefinitions ++ charts.cueDefinitions;
@@ -120,9 +126,10 @@ in rec {
     '';
   };
 
-  images = { name, src, charts } @ args: let
+  images = { name, src, charts, images } @ args: let
   in pkgs.stdenv.mkDerivation {
-    inherit name src;
+    inherit name;
+    inherit src;
     dontUnpack = true;
     nativeBuildInputs = [ pkgs.jq ];
     installPhase = ''
@@ -131,6 +138,12 @@ in rec {
       declare -p charts
       for chart in "''${charts[@]}"; do
         cp -r "$chart" "$out/charts/"
+      done
+      declare -A images="($(jq -r 'to_entries | map([.key, .value][]) | @sh' <<< ${serialize images}))"
+      mkdir -p "$out/images"
+      declare -p images
+      for image in "''${!images[@]}"; do
+        cp -r "''${images[$image]}" "$out/images/$image"
       done
       cp -r "$src" "$out/apps"
     '';

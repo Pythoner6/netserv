@@ -14,6 +14,7 @@
         kubeVersion = "v1.29.0";
 
         cue = import ./tools/cue.nix {inherit pkgs kubeVersion;};
+        oci = import ./tools/oci.nix {inherit pkgs;};
         utils = import ./tools/utils.nix {inherit pkgs;};
 
         versions = builtins.fromJSON (builtins.readFile ./versions.json);
@@ -136,10 +137,16 @@
               flux-components.components."flux-components.yaml" = flux-manifests;
               cilium.gateway-crds."crds.yaml" = gateway-crds;
             };
+            images = {
+              attic-token-service = attic-token-service-image;
+            };
           };
           ociImages = cue.images {
             name = "oci";
             inherit charts;
+            images = {
+              attic-token-service = attic-token-service-image;
+            };
             src = default;
           };
           elector = pkgs.buildGoModule {
@@ -229,10 +236,13 @@
               };
             };
           };
-          attic-token-service-image = pkgs.dockerTools.buildLayeredImage {
-            name = "attic-token-service-image";
-            contents = [ attic-token-service ];
-            config.Cmd = [ "attic-token-service" ];
+          attic-token-service-image = oci.fromDockerArchive {
+            name = "attic-token-service-image-oci";
+            src = pkgs.dockerTools.buildLayeredImage {
+              name = "attic-token-service-image";
+              contents = [ attic-token-service ];
+              config.Cmd = [ "attic-token-service" ];
+            };
           };
         };
         devShells = {

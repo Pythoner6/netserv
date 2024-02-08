@@ -25,4 +25,11 @@ in {
     #'';
     installPhase = "${./scripts/build_manifest_oci.sh}";
   };
+
+  fromDockerArchive = {name, src}: pkgs.stdenv.mkDerivation {
+    inherit name src;
+    dontUnpack = true;
+    nativeBuildInputs = [ pkgs.skopeo ];
+    buildPhase = ''skopeo --tmpdir "$(mktemp -d)" --insecure-policy copy docker-archive:$src oci:$out'';
+  };
 }

@@ -32,6 +32,7 @@ kustomizations: $default: "manifest": {
     kind: "ExternalSecret"
     spec: {
       refreshInterval: "0"
+      template: data: HS256_SECRET: "{{ .password }}"
       dataFrom: [{sourceRef: generatorRef: {
         apiVersion: secretGenerator.apiVersion
         kind: secretGenerator.kind
@@ -43,9 +44,8 @@ kustomizations: $default: "manifest": {
     metadata: name: "attic-server"
     data: "gen-config.sh": """
       cat <<EOF > /config/server.toml
-
       api-endpoint = "https://attic.home.josephmartin.org/"
-      token-hs256-secret-base64 = "$(cat /secrets/password)"
+      token-hs256-secret-base64 = "$(cat /secrets/HS256_SECRET)"
       [database]
       [chunking]
       nar-size-threshold = 65536 # chunk files that are 64 KiB or larger
@@ -159,6 +159,48 @@ kustomizations: $default: "manifest": {
       }]
     }
   }
+  tokenServiceDeployment="attic-token-service": this=(appsv1.#Deployment & {
+    metadata: labels: app: this.metadata.name
+    spec: {
+      replicas: 1
+      selector: matchLabels: app: template.metadata.labels.app
+      template: {
+        metadata: labels: app: this.metadata.labels.app
+        spec: {
+          containers: [{
+            name: this.metadata.name
+            image: "ghcr.io/pythoner6/netserv/attic-token-service@\(#Images["attic-token-service"].digest)"
+            ports: [{ containerPort: 8080 }]
+            env: [{
+              name: "OIDC_URL"
+              value: "https://gitlab.home.josephmartin.org"
+            },{
+              name: "AUDIENCE"
+              value: "https://\(domain)"
+            },{
+              name: "LISTEN_PORT"
+              value: "8080"
+            },{
+              name: "LISTEN_ADDRESS"
+              value: "0.0.0.0"
+            }]
+            envFrom: [{ secretRef: name: secret.metadata.name }]
+          }]
+        }
+      }
+    }
+  })
+  tokenService: corev1.#Service & {
+    metadata: name: "attic-token-service"
+    spec: {
+      selector: app: tokenServiceDeployment.spec.template.metadata.labels.app
+      ports: [{
+        protocol: "TCP"
+        port: 80
+        targetPort: 8080
+      }]
+    }
+  }
   cert="attic-cert": this=(certificates.#Certificate & {
     spec: {
       secretName: this.metadata.name
@@ -196,7 +238,7 @@ kustomizations: $default: "manifest": {
           }
         }]
         backendRefs: [{
-          name: "attic-token-service"
+          name: tokenService.metadata.name
           port: 80
         }]
       },{

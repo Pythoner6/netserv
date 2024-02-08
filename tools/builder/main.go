@@ -552,6 +552,7 @@ func Synth(pkgs, tags []string, extraManifests map[string]map[string]string, out
 type SynthInput struct {
   Path           string   `json:"path"`
   ChartIndex     string   `json:"chartIndex"`
+  ImageIndex     string   `json:"imageIndex"`
   CuePackageName string   `json:"cuePackageName"`
   CueDefinitions []string `json:"cueDefinitions"`
   ExtraManifests map[string]map[string]string `json:"extraManifests"`
@@ -572,8 +573,15 @@ func main() {
   if err != nil { panic(err) }
   charts, err := io.ReadAll(index)
   if err != nil { panic(err) }
+
+  index, err = os.Open(input.ImageIndex)
+  if err != nil { panic(err) }
+  images, err := io.ReadAll(index)
+  if err != nil { panic(err) }
+
   tags := []string{
     "charts=" + string(charts),
+    "images=" + string(images),
   }
 
   digests := make(map[string]string)
