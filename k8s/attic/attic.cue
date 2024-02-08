@@ -32,7 +32,7 @@ kustomizations: $default: "manifest": {
     kind: "ExternalSecret"
     spec: {
       refreshInterval: "0"
-      template: data: HS256_SECRET: "{{ .password }}"
+      target: template: data: HS256_SECRET: "{{ .password }}"
       dataFrom: [{sourceRef: generatorRef: {
         apiVersion: secretGenerator.apiVersion
         kind: secretGenerator.kind
