@@ -167,6 +167,7 @@ kustomizations: $default: "manifest": {
       template: {
         metadata: labels: app: this.metadata.labels.app
         spec: {
+          nodeSelector: "kubernetes.io/arch": "amd64"
           containers: [{
             name: this.metadata.name
             image: "ghcr.io/pythoner6/netserv/attic-token-service@\(#Images["attic-token-service"].digest)"
