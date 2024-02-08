@@ -34,7 +34,7 @@ jobs:
           crane auth login -u "$ACTOR" --password-stdin <<< "$TOKEN" "ghcr.io" 
           readarray -t images <<< "$(find result/images -maxdepth 1 -mindepth 1 -type d)"
           for image in "${images[@]}"; do
-            crane push "$image" "$BASE_URL/netserv/$(basename image):latest"
+            crane push "$image" "$BASE_URL/netserv/$(basename $image):latest"
           done
           readarray -t charts <<< "$(find result/charts -maxdepth 1 -mindepth 1 -type d)"
           for chart in "${charts[@]}"; do
