@@ -315,7 +315,7 @@
             buildInputs = with pkgs; [ pkgs.cue pkgs.timoni postgresql jq nodejs nodePackages.npm typescript kubernetes-helm flux umoci skopeo weave-gitops yq-go go xxd talosctl pkgs.crane openldap operator-sdk jdk19 maven gradle pkgs.cargo pkgs.rustc ];
           };
           push = pkgs.mkShell {
-            buildInputs = with pkgs; [ crane ];
+            buildInputs = [ pkgs.crane ];
           };
         };
       };
