@@ -2,8 +2,16 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-23.11";
     flake-parts.url = "github:hercules-ci/flake-parts";
+    rust-overlay = {
+      url = "github:oxalica/rust-overlay";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    crane = {
+      url = "github:ipetkov/crane";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
-  outputs = inputs@{ self, nixpkgs, flake-parts }:
+  outputs = inputs@{ self, nixpkgs, flake-parts, rust-overlay, crane }:
     flake-parts.lib.mkFlake {inherit inputs;} {
       systems = ["x86_64-linux" "aarch64-linux"];
       perSystem = { pkgs, system, ... }: let 
@@ -117,8 +125,18 @@
             url = "https://gitlab-charts.s3.amazonaws.com/gitlab-7.8.2.tgz";
             digest = "a17344e044350fd37da4a2acdaf61eea7b6e77ee214a955424b8d164ff251e5e";
           };
+          strimzi-kafka-operator.src = utils.fetchurlHexDigest {
+            # renovate: github-release-attachments package=strimzi/strimzi-kafka-operator version=0.39.0
+            url = "https://github.com/strimzi/strimzi-kafka-operator/releases/download/0.39.0/strimzi-kafka-operator-helm-3-chart-0.39.0.tgz";
+            digest = "a0fab1443750719105fc3fba09862a7a325ca9a6241edfec1f45f29117786066";
+          };
         };
       in {
+        _module.args.pkgs = import inputs.nixpkgs {
+          inherit system;
+          overlays = [rust-overlay.overlays.default];
+          config = {};
+        };
         packages = rec {
           default = manifests;
           manifests = cue.synth {
@@ -225,16 +243,31 @@
               rsync -r --exclude=kubernetes.json build/kubernetes/ $crds/
             '';
           });
-          attic-token-service = pkgs.rustPlatform.buildRustPackage {
-            name = "attic-token-service";
-            src = ./src/attic-token-service;
-            cargoLock = {
-              lockFile = ./src/attic-token-service/Cargo.lock;
-              outputHashes = {
-                "attic-0.1.0" = "sha256-+ACjzPhs0ejAmKMiAM/QGooRt5oUBBm3HQTD59R9rS4=";                
-                "nix-base32-0.1.2-alpha.0" = "sha256-wtPWGOamy3+ViEzCxMSwBcoR4HMMD0t8eyLwXfCDFdo=";
-              };
-            };
+          #attic-token-service = pkgs.rustPlatform.buildRustPackage {
+          #  name = "attic-token-service";
+          #  src = ./src/attic-token-service;
+          #  #cargo = pkgs.rust-bin.stable.latest.default.override {
+          #  cargo = pkgs.pkgsStatic.rust-bin.fromRustupToolchain {
+          #    channel = "stable";
+          #    targets = [ "x86_64-unknown-linux-musl" ];
+          #  };
+          #  cargoLock = {
+          #    lockFile = ./src/attic-token-service/Cargo.lock;
+          #    outputHashes = {
+          #      "attic-0.1.0" = "sha256-+ACjzPhs0ejAmKMiAM/QGooRt5oUBBm3HQTD59R9rS4=";                
+          #      "nix-base32-0.1.2-alpha.0" = "sha256-wtPWGOamy3+ViEzCxMSwBcoR4HMMD0t8eyLwXfCDFdo=";
+          #    };
+          #  };
+          #};
+          attic-token-service = let 
+            target = (builtins.head (pkgs.lib.strings.splitString "-" system)) + "-unknown-linux-musl";
+            craneLib = (crane.mkLib pkgs).overrideToolchain (pkgs.rust-bin.stable.latest.default.override {
+              targets = [ target ];
+            });
+          in craneLib.buildPackage {
+            src = craneLib.cleanCargoSource (craneLib.path ./src/attic-token-service);
+            strictDeps = true;
+            cargoExtraArgs = "--target ${target}";
           };
           attic-token-service-image = oci.fromDockerArchive {
             name = "attic-token-service-image-oci";
@@ -244,10 +277,42 @@
               config.Cmd = [ "attic-token-service" ];
             };
           };
+          pkl-src = pkgs.fetchFromGitHub {
+            owner = "apple";
+            repo = "pkl";
+            rev = "0.25.2";
+            hash = "sha256-nYFK1GPghtm9RAEhbSqeduYGTCEtWRHnKMLoECRxBak=";
+          };
+          pkl = pkgs.stdenv.mkDerivation (let 
+            deps = pkgs.stdenv.mkDerivation {
+              name = "pkl-deps";
+              src = pkl-src;
+              nativeBuildInputs = [pkgs.gradle_7 pkgs.git];
+              buildPhase = ''
+                cd pkl-cli
+                gradle tasks --all
+                gradle --no-daemon installDist
+                ls ~/.gradle/caches/modules-2/files-2.1
+              '';
+              installPhase = ''
+                gradle --no-daemon -Dmaven.repo.local=$out/.m2 cacheToMavenLocal
+              '';
+              outputHashAlgo = "sha256";
+              outputHashMode = "recursive";
+              outputHash = "";
+            };
+          in {
+            name = "pkl";
+            src = pkl-src;
+            nativeBuildInputs = [ pkgs.gradle pkgs.makeWrapper deps pkgs.rsync ];
+            buildPhase = ''
+              touch $out
+            '';
+          });
         };
         devShells = {
           default = pkgs.mkShell {
-            buildInputs = with pkgs; [ pkgs.cue pkgs.timoni postgresql jq nodejs nodePackages.npm typescript kubernetes-helm flux umoci skopeo weave-gitops yq-go go xxd talosctl crane openldap operator-sdk jdk19 maven gradle pkgs.cargo pkgs.rustc ];
+            buildInputs = with pkgs; [ pkgs.cue pkgs.timoni postgresql jq nodejs nodePackages.npm typescript kubernetes-helm flux umoci skopeo weave-gitops yq-go go xxd talosctl pkgs.crane openldap operator-sdk jdk19 maven gradle pkgs.cargo pkgs.rustc ];
           };
           push = pkgs.mkShell {
             buildInputs = with pkgs; [ crane ];

@@ -13,6 +13,7 @@ import (
   rook "pythoner6.dev/netserv/k8s/rook:netserv"
   openldap "pythoner6.dev/netserv/k8s/openldap:netserv"
   attic "pythoner6.dev/netserv/k8s/attic:netserv"
+  kafka "pythoner6.dev/netserv/k8s/kafka-operator:netserv"
 )
 
 appName: "root"
@@ -28,6 +29,7 @@ appName: "root"
   rook,
   openldap,
   attic,
+  kafka,
 ]
 
 #digests: yaml.Unmarshal({s: string @tag(digests)}.s)
