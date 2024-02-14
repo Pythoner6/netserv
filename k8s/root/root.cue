@@ -15,6 +15,7 @@ import (
   attic "pythoner6.dev/netserv/k8s/attic:netserv"
   kafka "pythoner6.dev/netserv/k8s/kafka-operator:netserv"
   tekton "pythoner6.dev/netserv/k8s/tekton:netserv"
+  gerrit "pythoner6.dev/netserv/k8s/gerrit:netserv"
 )
 
 appName: "root"
@@ -32,6 +33,7 @@ appName: "root"
   attic,
   kafka,
   tekton,
+  gerrit,
 ]
 
 #digests: yaml.Unmarshal({s: string @tag(digests)}.s)

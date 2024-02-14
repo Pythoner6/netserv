@@ -12,7 +12,9 @@ kustomizations: helm: "release": {
     spec: {
       chart: spec: #Charts["strimzi-kafka-operator"]
       interval: "10m0s"
-      values: {}
+      values: {
+        watchNamespaces: ["gerrit"]
+      }
     }
   }
 }
