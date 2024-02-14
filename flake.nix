@@ -81,6 +81,12 @@
           hash = "sha256-bGAdzteHKpQNdvpmeuEmunGMtMbblw0Lq0kSjswRkqM=";
         };
 
+        tekton-operator-manifest = utils.fetchurlHexDigest {
+          # renovate: github-release-attachments package=tektoncd/operator version=v0.69.1
+          url = "https://github.com/tektoncd/operator/releases/download/v0.69.1/release.yaml";
+          digest = "0e591f8680ac72facb83c6c80b04007b54187c59ac5348a951936554b4999f6f";
+        };
+
         charts = cue.charts {
           cilium.src = utils.fetchurlHexDigest {
             # renovate: helm=https://helm.cilium.io package=cilium version=1.15.0
@@ -154,6 +160,7 @@
             extraManifests = {
               flux-components.components."flux-components.yaml" = flux-manifests;
               cilium.gateway-crds."crds.yaml" = gateway-crds;
+              tekton."operator"."manifest.yaml" = tekton-operator-manifest;
             };
             images = {
               attic-token-service = attic-token-service-image;

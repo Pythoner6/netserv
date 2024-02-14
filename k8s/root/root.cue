@@ -14,6 +14,7 @@ import (
   openldap "pythoner6.dev/netserv/k8s/openldap:netserv"
   attic "pythoner6.dev/netserv/k8s/attic:netserv"
   kafka "pythoner6.dev/netserv/k8s/kafka-operator:netserv"
+  tekton "pythoner6.dev/netserv/k8s/tekton:netserv"
 )
 
 appName: "root"
@@ -30,6 +31,7 @@ appName: "root"
   openldap,
   attic,
   kafka,
+  tekton,
 ]
 
 #digests: yaml.Unmarshal({s: string @tag(digests)}.s)
