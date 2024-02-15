@@ -127,9 +127,9 @@
             digest = "c9fd95e3a56241d99f6a27f801488e6d70dfdd9bcd0e49420f28847d9377414d";
           };
           gitlab.src = utils.fetchurlHexDigest {
-            # renovate: helm=https://charts.gitlab.io package=gitlab version=7.8.2
-            url = "https://gitlab-charts.s3.amazonaws.com/gitlab-7.8.2.tgz";
-            digest = "a17344e044350fd37da4a2acdaf61eea7b6e77ee214a955424b8d164ff251e5e";
+            # renovate: helm=https://charts.gitlab.io package=gitlab version=7.9.0
+            url = "https://gitlab-charts.s3.amazonaws.com/gitlab-7.9.0.tgz";
+            digest = "789ec56d929c7ec403fc05249639d0c48ff6ab831f90db7c6ac133534d0aba19";
           };
           strimzi-kafka-operator.src = utils.fetchurlHexDigest {
             # renovate: github-release-attachments package=strimzi/strimzi-kafka-operator version=0.39.0
