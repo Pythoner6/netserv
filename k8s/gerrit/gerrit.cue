@@ -1,8 +1,9 @@
 package netserv
 
-//import (
+import (
 //  kafkas "kafka.strimzi.io/kafka/v1beta2"
-//)
+  kafkausers "kafka.strimzi.io/kafkauser/v1beta2"
+)
 
 appName: "gerrit"
 
@@ -86,5 +87,9 @@ kustomizations: $default: manifest: {
         }
       }
     }
+  }
+  kafkaUser: kafkausers.#KafkaUser & {
+    metadata: name: "gerrit"
+    spec: authentication: type: "tls"
   }
 }
