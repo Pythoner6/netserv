@@ -61,8 +61,10 @@ kustomizations: $default: manifest: {
           size: "20Gi"
         }
         template: {
-          statefulset: metadata: labels: app: "gerrit-kafka"
-          pod: affinity: _affinity & {#label: statefulset.metadata.labels.app}
+          pod: {
+            metadata: labels: app: "gerrit-kafka"
+            affinity: _affinity & {#label: statefulset.metadata.labels.app}
+          }
         }
       }
       zookeeper: {
@@ -77,8 +79,10 @@ kustomizations: $default: manifest: {
           size: "10Gi"
         }
         template: {
-          statefulset: metadata: labels: app: "gerrit-zookeeper"
-          pod: affinity: _affinity & {#label: statefulset.metadata.labels.app}
+          pod: {
+            metadata: labels: app: "gerrit-zookeeper"
+            affinity: _affinity & {#label: statefulset.metadata.labels.app}
+          }
         }
       }
     }
