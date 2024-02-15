@@ -50,7 +50,7 @@ kustomizations: $default: manifest: {
         listeners: [{
           port: 9092
           name: "listener"
-          type: "loadbalancer"
+          type: "internal"
           tls: true
           authentication: type: "tls"
           configuration: useServiceDnsDomain: true
@@ -61,8 +61,8 @@ kustomizations: $default: manifest: {
           size: "20Gi"
         }
         template: {
-          //statefulset: metadata: labels: app: "gerrit-kafka"
-          //pod: affinity: _affinity & {#label: statefulset.metadata.labels.app}
+          statefulset: metadata: labels: app: "gerrit-kafka"
+          pod: affinity: _affinity & {#label: statefulset.metadata.labels.app}
         }
       }
       zookeeper: {
