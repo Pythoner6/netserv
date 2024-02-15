@@ -63,7 +63,7 @@ kustomizations: $default: manifest: {
         template: {
           pod: {
             metadata: labels: app: "gerrit-kafka"
-            affinity: _affinity & {#label: statefulset.metadata.labels.app}
+            affinity: _affinity & {#label: metadata.labels.app}
           }
         }
       }
@@ -81,7 +81,7 @@ kustomizations: $default: manifest: {
         template: {
           pod: {
             metadata: labels: app: "gerrit-zookeeper"
-            affinity: _affinity & {#label: statefulset.metadata.labels.app}
+            affinity: _affinity & {#label: metadata.labels.app}
           }
         }
       }
