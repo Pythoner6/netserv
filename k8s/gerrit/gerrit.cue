@@ -33,6 +33,10 @@ kustomizations: $default: manifest: {
     apiVersion: "kafka.strimzi.io/v1beta2"
     kind: "Kafka"
     spec: {
+      entityOperator: {
+        userOperator: {}
+        topicOperator: {}
+      }
       kafka: {
         replicas: 3
         version: "3.6.1"
