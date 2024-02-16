@@ -5,6 +5,7 @@
     bazelRunScript = pkgs.writeShellScriptBin "bazel-run" ''
       export HOME="$bazelOut/external/home"
       mkdir -p "$bazelOut/external/home"
+      yarn config set cache-folder "$bazelOut/external/yarn_cache"
       exec /bin/bazel "$@"
     '';
     bazel = (pkgs.buildFHSUserEnv {
@@ -16,7 +17,7 @@
         pkgs.python3
         pkgs.curl
         pkgs.nodejs
-        pkgs.yarn-berry
+        pkgs.yarn
         pkgs.git
         bazelRunScript
       ];
@@ -42,14 +43,15 @@
     removeRulesCC = false;
     fetchConfigured = true;
     fetchAttrs = {
-      sha256 = "sha256-j/L26KCpy2wbDMDkyHU4X8pKo3Op7mOwmtfJaH4Wyb0=";
+      sha256 = "sha256-C9BrfAMbTTdLHIj5aBnatsvEWDkBHk3xW7soBNYpPHs=";
       preConfigure = ''
         rm .bazelversion
       '';
       preInstall = ''
         # polymer-bridges is a local package (git submodule); yarn for some reason 
         # copies it into the cache with a guid+timestamp which breaks reproducibility
-        rm -rf $bazelOut/external/home/.cache/yarn/v6/npm-polymer-bridges-*
+        find "$bazelOut/external/yarn_cache" -type d -name '*polymer-bridges*' -exec rm -rf {} +
+        find "$bazelOut/external/yarn_cache" \( -name .yarn-tarball.tgz -or -name .yarn-metadata.json \) -exec chmod 644 {} +
         find . -name node_modules | while read d; do
           mkdir -p "$bazelOut/external/.extra-node-modules-dirs/$(dirname $d)"
           cp -R "$d" "$bazelOut/external/.extra-node-modules-dirs/$d"
