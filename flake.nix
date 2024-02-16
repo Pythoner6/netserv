@@ -24,6 +24,7 @@
         cue = import ./tools/cue.nix {inherit pkgs kubeVersion;};
         oci = import ./tools/oci.nix {inherit pkgs;};
         utils = import ./tools/utils.nix {inherit pkgs;};
+        gerrit = import ./tools/gerrit.nix {inherit pkgs;};
 
         versions = builtins.fromJSON (builtins.readFile ./versions.json);
         stripv = v: builtins.head (builtins.match "^v?(.*)" v);
@@ -137,6 +138,10 @@
             digest = "a0fab1443750719105fc3fba09862a7a325ca9a6241edfec1f45f29117786066";
           };
         };
+        gerrit-image = oci.fromDockerArchive {
+          name = "gerrit-image-oci";
+          src = gerrit.gerrit-image;
+        };
       in {
         _module.args.pkgs = import inputs.nixpkgs {
           inherit system;
@@ -164,6 +169,7 @@
             };
             images = {
               attic-token-service = attic-token-service-image;
+              gerrit = gerrit-image;
             };
           };
           ociImages = cue.images {
@@ -171,6 +177,7 @@
             inherit charts;
             images = {
               attic-token-service = attic-token-service-image;
+              gerrit = gerrit-image;
             };
             src = default;
           };
