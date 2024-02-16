@@ -123,7 +123,7 @@ in rec {
         rev = "7cb71d017038df98889376a4fb837306c9cc7762";
         hash = "sha256-RhZJuyqZ/yRT45CXZP1kcc7E8KhLupWdAe5GLeYQpE4=";
       };
-      depsOutputHash = "sha256-Z8PpbyMYOi+0tgtp4RFMa8LGBm302rRX2Vq8cMnpx5Q=";
+      depsOutputHash = "sha256-/bzvadY55V4UqCpCzLjBo+jVL3zkrtnLyK/tlIatSMs";
     };
     zookeeper-refdb = {
       src = pkgs.fetchgit {
@@ -132,7 +132,7 @@ in rec {
         hash = "sha256-N9JKw05azDlqehUFymnsJlW0ZQe8/9vRlnQgj9hB+Yw=";
       };
       pluginDeps = [ global-refdb ];
-      depsOutputHash = "sha256-J1FRJ8MXTeaBZ5S1DRcjUJFRLUny+YzcNzP7xQSpa5A=";
+      depsOutputHash = "sha256-dh63tgBbLCKgmdyplA9b45Qr7NwnUMU4TXxhLiXxgKE=";
       needsExternalDeps = true;
     };
     events-broker = {
@@ -142,7 +142,7 @@ in rec {
         rev = "fec27cee2d281e6b22974fe75e73a988b749fdb0";
         hash = "sha256-V4mNGcCy9mfof9K8nYsnEgP/QTe62yukaTQBtaGUEs8=";
       };
-      depsOutputHash = "sha256-Z8PpbyMYOi+0tgtp4RFMa8LGBm302rRX2Vq8cMnpx5Q=";
+      depsOutputHash = "sha256-/bzvadY55V4UqCpCzLjBo+jVL3zkrtnLyK/tlIatSMs=";
     };
     events-kafka = {
       src = pkgs.fetchgit {
@@ -150,7 +150,7 @@ in rec {
         rev = "662887a0b9a9fda91e559a7cbc6d549f66973def";
         hash = "sha256-K8zZXvnuv4yNEBMLR3PGRQk5iS7gCZ1uwXLqzOQrP5g=";
       };
-      depsOutputHash = "sha256-4gaW516xVHwpvWyGr6E8uL/uW3HOHe5Dh/FVaaOqnoc=";
+      depsOutputHash = "sha256-SAWWqzScWkBg/b3oekumIGKjfV9MUNS7Kiu3qSjashE=";
       pluginDeps = [ events-broker ];
       needsExternalDeps = true;
     };
@@ -162,7 +162,7 @@ in rec {
         hash = "sha256-grQ1vwPcHltQnrGu9/e8pT6jOgxcJ+NkQ/tRnSo0Ls8=";
       };
       pluginDeps = [ events-broker ];
-      depsOutputHash = "sha256-UtxMV7fiRlt07cYfrFWdqfGBH6HCO5Pa5E+S1iXcJro=";
+      depsOutputHash = "sha256-7ZGkZscZigyZZ9b3vUK2AVM1V9p5s9HfAGblKgfIgRI=";
     };
     multi-site = {
       src = pkgs.fetchgit {
@@ -171,7 +171,7 @@ in rec {
         hash = "sha256-/OzCy6hVrycofCGQX1jLqsXuZ0oNwxb1hpfwHi0U45c=";
       };
       pluginDeps = [ global-refdb events-broker pull-replication ];
-      depsOutputHash = "sha256-7Wn7rouOgzZOEubYbpyjok6HBuHWeqM959LaNVL9ZNw=";
+      depsOutputHash = "sha256-mddizw/d+Qt3MO6TPWjyaESprFTYihVx91egOuJnaJ4=";
     };
     websession-broker = {
       src = pkgs.fetchgit {
@@ -180,7 +180,7 @@ in rec {
         hash = "sha256-JvYE1LhGWRu4VAJFcJIW3TbltqB7B3EO3IV2YxiCfFo=";
       };
       pluginDeps = [ events-broker ];
-      depsOutputHash = "sha256-Z8PpbyMYOi+0tgtp4RFMa8LGBm302rRX2Vq8cMnpx5Q=";
+      depsOutputHash = "sha256-/bzvadY55V4UqCpCzLjBo+jVL3zkrtnLyK/tlIatSMs=";
     };
     healthcheck = {
       src = pkgs.fetchgit {
@@ -188,7 +188,7 @@ in rec {
         rev = "9d88dfbe17ad79a96a653a599fc1a0434831723f";
         hash = "sha256-uVg665skNPMTdrkm2GAzk3KINsmtiFzMGD3GEZ0TnKc=";
       };
-      depsOutputHash = "sha256-Z8PpbyMYOi+0tgtp4RFMa8LGBm302rRX2Vq8cMnpx5Q=";
+      depsOutputHash = "sha256-/bzvadY55V4UqCpCzLjBo+jVL3zkrtnLyK/tlIatSMs=";
     };
     replication-status = {
       src = pkgs.fetchgit {
@@ -196,7 +196,7 @@ in rec {
         rev = "469efa8c0c75947f0d6157fa05f280477e294bac";
         hash = "sha256-CfSdb+yLq+2mXBkYJA2dOq2ipmyEzBm1R07kRSEh2M0=";
       };
-      depsOutputHash = "sha256-Z8PpbyMYOi+0tgtp4RFMa8LGBm302rRX2Vq8cMnpx5Q=";
+      depsOutputHash = "sha256-/bzvadY55V4UqCpCzLjBo+jVL3zkrtnLyK/tlIatSMs=";
     };
   };
   gerrit-image = let 
