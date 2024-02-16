@@ -3,7 +3,6 @@
   gerrit-version = "3.9.1";
   gerrit = let
     bazelRunScript = pkgs.writeShellScriptBin "bazel-run" ''
-      yarn config set cache-folder "$bazelOut/external/yarn_cache"
       export HOME="$bazelOut/external/home"
       mkdir -p "$bazelOut/external/home"
       exec /bin/bazel "$@"
@@ -17,7 +16,7 @@
         pkgs.python3
         pkgs.curl
         pkgs.nodejs
-        pkgs.yarn
+        pkgs.yarn-berry
         pkgs.git
         bazelRunScript
       ];
@@ -26,6 +25,7 @@
   in pkgs.lib.makeOverridable pkgs.buildBazelPackage (rec {
     pname = "gerrit";
     version = gerrit-version;
+    name = "${pname}-${version}.war";
     src = pkgs.fetchgit {
       url = "https://gerrit.googlesource.com/gerrit";
       rev = "620a819cbf3c64fff7a66798822775ad42c91d8e";
@@ -34,7 +34,7 @@
       fetchSubmodules = true;
     };
     inherit bazel;
-    bazelTargets = [ "release" "api-skip-javadoc" ];
+    bazelTargets = [ "release" ];
     bazelFlags = [
       "--repository_cache="
       "--disk_cache="
@@ -42,11 +42,14 @@
     removeRulesCC = false;
     fetchConfigured = true;
     fetchAttrs = {
-      sha256 = "sha256-fr5OIRLYvowHMF5EqKNHQ3QiTbtg4P9So4LTZ2qa9ms=";
+      sha256 = "sha256-j/L26KCpy2wbDMDkyHU4X8pKo3Op7mOwmtfJaH4Wyb0=";
       preConfigure = ''
         rm .bazelversion
       '';
       preInstall = ''
+        # polymer-bridges is a local package (git submodule); yarn for some reason 
+        # copies it into the cache with a guid+timestamp which breaks reproducibility
+        rm -rf $bazelOut/external/home/.cache/yarn/v6/npm-polymer-bridges-*
         find . -name node_modules | while read d; do
           mkdir -p "$bazelOut/external/.extra-node-modules-dirs/$(dirname $d)"
           cp -R "$d" "$bazelOut/external/.extra-node-modules-dirs/$d"
@@ -62,11 +65,8 @@
         fi
       '';
       installPhase = ''
-        mkdir -p "$out/webapps/" "$out/share/api/"
-        cp bazel-bin/release.war "$out/webapps/gerrit-${version}.war"
-        unzip bazel-bin/api-skip-javadoc.zip -d "$out/share/api"
+        cp bazel-bin/release.war $out
       '';
-      nativeBuildInputs = [ pkgs.unzip ];
     };
 
     passthru = {
@@ -208,7 +208,7 @@ in rec {
       ];
       installPhase = ''
         mkdir -p $out
-        java -jar ${gerrit}/webapps/gerrit-${gerrit-version}.war init --no-auto-start --skip-all-downloads --batch -d $out/var/gerrit
+        java -jar ${gerrit} init --no-auto-start --skip-all-downloads --batch -d $out/var/gerrit
         rm -rf $out/var/gerrit/{git,db,index,cache,etc}
         ${builtins.concatStringsSep "\n" (builtins.map (p: "p=${p}; cp $p $out/var/gerrit/plugins/\${p#/nix/store/*-}") (builtins.attrValues gerritPlugins))}
         ln -s /var/gerrit/plugins/global-refdb.jar $out/var/gerrit/lib/global-refdb.jar
