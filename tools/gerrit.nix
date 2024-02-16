@@ -48,10 +48,13 @@
         rm .bazelversion
       '';
       preInstall = ''
-        # polymer-bridges is a local package (git submodule); yarn for some reason 
-        # copies it into the cache with a guid+timestamp which breaks reproducibility
-        find "$bazelOut/external/yarn_cache" -type d -name '*polymer-bridges*' -exec rm -rf {} +
-        find "$bazelOut/external/yarn_cache" \( -name .yarn-tarball.tgz -or -name .yarn-metadata.json \) -exec chmod 644 {} +
+        if [[ -d "$bazelOut/external/yarn_cache" ]]; then
+          # polymer-bridges is a local package (git submodule); yarn for some reason 
+          # copies it into the cache with a guid+timestamp which breaks reproducibility
+          find "$bazelOut/external/yarn_cache" -type d -name '*polymer-bridges*' -exec rm -rf {} +
+          # for some reason these file permissions seem to cause problems too
+          find "$bazelOut/external/yarn_cache" \( -name .yarn-tarball.tgz -or -name .yarn-metadata.json \) -exec chmod 644 {} +
+        fi
         find . -name node_modules | while read d; do
           mkdir -p "$bazelOut/external/.extra-node-modules-dirs/$(dirname $d)"
           cp -R "$d" "$bazelOut/external/.extra-node-modules-dirs/$d"
