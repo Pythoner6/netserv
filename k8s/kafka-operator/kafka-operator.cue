@@ -14,6 +14,7 @@ kustomizations: helm: "release": {
       interval: "10m0s"
       values: {
         watchNamespaces: ["gerrit"]
+        featureGates: "+UseKRaft"
       }
     }
   }

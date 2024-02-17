@@ -3,10 +3,11 @@ package netserv
 import (
 //  kafkas "kafka.strimzi.io/kafka/v1beta2"
   kafkausers "kafka.strimzi.io/kafkauser/v1beta2"
-  externalsecrets "external-secrets.io/externalsecret/v1beta1"
-  issuers "cert-manager.io/issuer/v1"
-  corev1 "k8s.io/api/core/v1"
-  rbacv1 "k8s.io/api/rbac/v1"
+  kafkanodepools "kafka.strimzi.io/kafkanodepool/v1beta2"
+  //externalsecrets "external-secrets.io/externalsecret/v1beta1"
+  //issuers "cert-manager.io/issuer/v1"
+  //corev1 "k8s.io/api/core/v1"
+  //rbacv1 "k8s.io/api/rbac/v1"
 )
 
 appName: "gerrit"
@@ -32,14 +33,27 @@ _affinity: {
 
 kustomizations: $default: manifest: {
   ns: #AppNamespace
-  //"events-broker": kafkas.#Kafka & {
+  "events-broker-node-pool": kafkanodepools.#KafkaNodePool & {
+    metadata: labels: "strimzi.io/cluster": broker.metadata.name
+    spec: {
+      replicas: 3
+      roles: ["controller", "broker"]
+      storage: {
+        type: "persistent-claim"
+        class: "local-hostpath"
+        size: "20Gi"
+      }
+    }
+  }
+  //broker="events-broker": kafkas.#Kafka & {
   broker="events-broker": {
     apiVersion: "kafka.strimzi.io/v1beta2"
     kind: "Kafka"
+    metadata: annotation: "strimzi.io/kraft": "enabled"
+    metadata: annotation: "strimzi.io/node-pools": "enabled"
     spec: {
       entityOperator: {
         userOperator: {}
-        topicOperator: {}
       }
       kafka: {
         replicas: 3
@@ -64,6 +78,7 @@ kustomizations: $default: manifest: {
           authentication: type: "tls"
           configuration: useServiceDnsDomain: true
         }]
+        // Ignored because of kraft mode
         storage: {
           type: "persistent-claim"
           class: "local-hostpath"
@@ -76,22 +91,13 @@ kustomizations: $default: manifest: {
           }
         }
       }
+      // Ignored because of kraft mode
       zookeeper: {
         replicas: 3
-        logging: {
-          type: "inline"
-          //loggers: "zookeeper.root.logger": "INFO"
-        }
         storage: {
           type: "persistent-claim"
           class: "local-hostpath"
           size: "10Gi"
-        }
-        template: {
-          pod: {
-            metadata: labels: app: "gerrit-zookeeper"
-            affinity: _affinity & {#label: metadata.labels.app}
-          }
         }
       }
     }
@@ -101,77 +107,7 @@ kustomizations: $default: manifest: {
     spec: authentication: type: "tls"
   }
 
-  storeServiceAccount: corev1.#ServiceAccount & {
-    metadata: name: "bucket-secrets-store"
-  }
-  // TODO restrict to specific secrets
-  storeRole: rbacv1.#Role & {
-    metadata: name: "gerrit-secrets-store"
-    rules: [{
-      apiGroups: [""]
-      resources: ["secrets"]
-      verbs: ["get", "watch", "list"]
-    }]
-  }
-  storeRoleBinding: rbacv1.#RoleBinding & {
-    metadata: name: "gerrit-secrets-store"
-    subjects: [{
-      kind: storeServiceAccount.kind
-      name: storeServiceAccount.metadata.name
-      apiGroup: ""
-    }]
-    roleRef: {
-      kind: storeRole.kind
-      name: storeRole.metadata.name
-      apiGroup: "rbac.authorization.k8s.io"
-    }
-  }
-  store="gerrit-secrets-store": {
-    // CUE MaxFields is broken so the ES CRD doesn't validate right now
-    apiVersion: "external-secrets.io/v1beta1"
-    kind: "SecretStore"
-    spec: provider: kubernetes: {
-      remoteNamespace: store.metadata.namespace
-      server: caProvider: {
-        type: "ConfigMap"
-        name: "kube-root-ca.crt"
-        key: "ca.crt"
-      }
-      auth: serviceAccount: name: storeServiceAccount.metadata.name
-    }
-  }
-  caSecret: externalsecrets.#ExternalSecret & {
-    metadata: name: "\(broker.metadata.name)-cluster-ca-synced"
-    spec: {
-      secretStoreRef: {
-        name: store.metadata.name
-        kind: store.kind
-      }
-      refreshInterval: "1h"
-      target: {
-        name: metadata.name
-        deletionPolicy: "Delete"
-        creationPolicy: "Owner"
-      }
-      data: [
-        {
-          secretKey: "tls.key"
-          remoteRef: {
-            key: "\(broker.metadata.name)-cluster-ca"
-            property: "ca.key"
-          }
-        },
-        {
-          secretKey: "tls.crt"
-          remoteRef: {
-            key: "\(broker.metadata.name)-cluster-ca-cert"
-            property: "ca.crt"
-          }
-        },
-      ]
-    }
-  }
-  "cluster-ca": issuers.#Issuer & {
-    spec: ca: secretName: caSecret.metadata.name
-  }
+  //"cluster-ca": issuers.#Issuer & {
+  //  spec: ca: secretName: caSecret.metadata.name
+  //}
 }
