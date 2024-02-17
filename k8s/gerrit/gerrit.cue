@@ -44,7 +44,12 @@ kustomizations: $default: manifest: {
   }
   refdbConfig="global-refdb-config": corev1.#ConfigMap & {
     data: "scylla.yaml": """
+    authenticator: com.scylladb.auth.CertificateAuthenticator
     alternator_enforce_authorization: true
+    auth_superuser_name: admin
+    auth_certificate_role_queries:
+    - source: ALTNAME
+      query: DNS=([^,\s]+)
     """
   }
   "global-refdb": scyllaclusters.#ScyllaCluster & {
