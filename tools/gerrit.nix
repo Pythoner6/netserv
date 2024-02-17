@@ -125,14 +125,14 @@ in rec {
       };
       depsOutputHash = "sha256-/bzvadY55V4UqCpCzLjBo+jVL3zkrtnLyK/tlIatSMs";
     };
-    zookeeper-refdb = {
+    aws-dynamodb-refdb = {
       src = pkgs.fetchgit {
-        url = "https://gerrit.googlesource.com/plugins/zookeeper-refdb";
-        rev = "d5b07d19134fc7884ef969662d5a63365108c07e";
-        hash = "sha256-N9JKw05azDlqehUFymnsJlW0ZQe8/9vRlnQgj9hB+Yw=";
+        url = "https://gerrit.googlesource.com/plugins/aws-dynamodb-refdb";
+        rev = "fc0df6d2ca2592660eae033161f3866d8e075fb4";
+        hash = "sha256-aMAQy2VDrU/mUevt9znYtIZzgJgV7npeowbwt0rJi2o=";
       };
       pluginDeps = [ global-refdb ];
-      depsOutputHash = "sha256-dh63tgBbLCKgmdyplA9b45Qr7NwnUMU4TXxhLiXxgKE=";
+      depsOutputHash = "sha256-INR9BGS9PSM/J4R5TJUecABxU5aaRKqpTN56cCvWYio=";
       needsExternalDeps = true;
     };
     events-broker = {
