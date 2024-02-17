@@ -35,7 +35,13 @@ _affinity: {
 
 kustomizations: $default: #dependsOn: [scyllaoperator.kustomizations.helm]
 kustomizations: $default: manifest: {
-  ns: #AppNamespace
+  ns: #AppNamespace & {
+    metadata: labels: {
+      "pod-security.kubernetes.io/enforce": "privileged"
+      "pod-security.kubernetes.io/audit": "privileged"
+      "pod-security.kubernetes.io/warn": "privileged"
+    }
+  }
   "global-refdb": scyllaclusters.#ScyllaCluster & {
     spec: {
       version: "5.2.15"
