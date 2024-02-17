@@ -14,6 +14,7 @@ kustomizations: helm: "release": {
       interval: "10m0s"
       values: {
         nodeSelector: "kubernetes.io/arch": "amd64"
+        webhookServerNodeSelector: "kubernetes.io/arch": "amd64"
       }
     }
   }
