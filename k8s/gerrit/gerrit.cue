@@ -48,6 +48,16 @@ kustomizations: $default: manifest: {
         racks: [{
           name: "us-east-1a"
           members: 3
+          resources: {
+            requests: {
+              cpu: "1"
+              memory: "2Gi"
+            }
+            limits: {
+              cpu: "1"
+              memory: "2Gi"
+            }
+          }
           storage: {
             capacity: "10G"
             storageClassName: "local-hostpath"
