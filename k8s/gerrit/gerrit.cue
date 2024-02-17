@@ -5,6 +5,7 @@ import (
   kafkausers "kafka.strimzi.io/kafkauser/v1beta2"
   kafkanodepools "kafka.strimzi.io/kafkanodepool/v1beta2"
   scyllaclusters "scylla.scylladb.com/scyllacluster/v1"
+  scyllaoperator "pythoner6.dev/netserv/k8s/scylla-operator:netserv"
   //externalsecrets "external-secrets.io/externalsecret/v1beta1"
   //issuers "cert-manager.io/issuer/v1"
   //corev1 "k8s.io/api/core/v1"
@@ -32,6 +33,7 @@ _affinity: {
   }]
 }
 
+kustomizations: $default: #dependsOn: [scyllaoperator.kustomizations.helm]
 kustomizations: $default: manifest: {
   ns: #AppNamespace
   "global-refdb": scyllaclusters.#ScyllaCluster & {

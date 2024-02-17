@@ -12,7 +12,9 @@ kustomizations: helm: "release": {
     spec: {
       chart: spec: #Charts[appName]
       interval: "10m0s"
-      values: {}
+      values: {
+        nodeSelector: "kubernetes.io/arch": "amd64"
+      }
     }
   }
 }
