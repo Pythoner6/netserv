@@ -54,7 +54,7 @@ kustomizations: $default: manifest: {
   }
   "global-refdb": scyllaclusters.#ScyllaCluster & {
     spec: {
-      version: "5.2.15"
+      version: "5.4.3"
       alternator: {
         port: 8000
         writeIsolation: "always"
