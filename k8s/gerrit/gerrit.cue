@@ -4,6 +4,7 @@ import (
 //  kafkas "kafka.strimzi.io/kafka/v1beta2"
   kafkausers "kafka.strimzi.io/kafkauser/v1beta2"
   kafkanodepools "kafka.strimzi.io/kafkanodepool/v1beta2"
+  scyllaclusters "scylla.scylladb.com/scyllacluster/v1"
   //externalsecrets "external-secrets.io/externalsecret/v1beta1"
   //issuers "cert-manager.io/issuer/v1"
   //corev1 "k8s.io/api/core/v1"
@@ -33,6 +34,27 @@ _affinity: {
 
 kustomizations: $default: manifest: {
   ns: #AppNamespace
+  "global-refdb": scyllaclusters.#ScyllaCluster & {
+    spec: {
+      version: "5.2.15"
+      alternator: {
+        port: 8000
+        writeIsolation: "always"
+      }
+      datacenter: {
+        name: "us-east-1"
+        racks: [{
+          name: "us-east-1a"
+          members: 3
+          storage: {
+            capacity: "10G"
+            storageClassName: "local-hostpath"
+          }
+          placement: _affinity & {#label: "global-refdb"}
+        }]
+      }
+    }
+  }
   "events-broker-node-pool": kafkanodepools.#KafkaNodePool & {
     metadata: labels: "strimzi.io/cluster": broker.metadata.name
     spec: {

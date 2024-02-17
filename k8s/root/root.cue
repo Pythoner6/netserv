@@ -16,6 +16,7 @@ import (
   kafka "pythoner6.dev/netserv/k8s/kafka-operator:netserv"
   tekton "pythoner6.dev/netserv/k8s/tekton:netserv"
   gerrit "pythoner6.dev/netserv/k8s/gerrit:netserv"
+  scylla "pythoner6.dev/netserv/k8s/scylla-operator:netserv"
 )
 
 appName: "root"
@@ -34,6 +35,7 @@ appName: "root"
   kafka,
   tekton,
   gerrit,
+  scylla,
 ]
 
 #digests: yaml.Unmarshal({s: string @tag(digests)}.s)

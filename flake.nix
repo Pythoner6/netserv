@@ -132,6 +132,11 @@
             url = "https://gitlab-charts.s3.amazonaws.com/gitlab-7.9.0.tgz";
             digest = "789ec56d929c7ec403fc05249639d0c48ff6ab831f90db7c6ac133534d0aba19";
           };
+          scylla-operator.src = utils.fetchurlHexDigest {
+            # renovate: helm=https://storage.googleapis.com/scylla-operator-charts/stable package=scylla version=1.11.2
+            url = "https://scylla-operator-charts.storage.googleapis.com/stable/scylla-operator-v1.11.2.tgz";
+            digest = "1e529d5a4e28b22ec49bcb0c05d1034de575b01d582af5caed82136289835470";
+          };
           strimzi-kafka-operator.src = utils.fetchurlHexDigest {
             # renovate: github-release-attachments package=strimzi/strimzi-kafka-operator version=0.39.0
             url = "https://github.com/strimzi/strimzi-kafka-operator/releases/download/0.39.0/strimzi-kafka-operator-helm-3-chart-0.39.0.tgz";
