@@ -8,7 +8,7 @@ import (
   scyllaoperator "pythoner6.dev/netserv/k8s/scylla-operator:netserv"
   //externalsecrets "external-secrets.io/externalsecret/v1beta1"
   //issuers "cert-manager.io/issuer/v1"
-  //corev1 "k8s.io/api/core/v1"
+  corev1 "k8s.io/api/core/v1"
   //rbacv1 "k8s.io/api/rbac/v1"
 )
 
@@ -42,6 +42,11 @@ kustomizations: $default: manifest: {
       "pod-security.kubernetes.io/warn": "privileged"
     }
   }
+  "scylla-config": corev1.#ConfigMap & {
+    data: "scylla.yaml": """
+    alternator_enforce_authorization: true
+    """
+  }
   "global-refdb": scyllaclusters.#ScyllaCluster & {
     spec: {
       version: "5.2.15"
@@ -57,11 +62,11 @@ kustomizations: $default: manifest: {
           resources: {
             requests: {
               cpu: "1"
-              memory: "2Gi"
+              memory: "3Gi"
             }
             limits: {
               cpu: "1"
-              memory: "2Gi"
+              memory: "3Gi"
             }
           }
           storage: {
