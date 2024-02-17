@@ -48,8 +48,8 @@ kustomizations: $default: manifest: {
     alternator_enforce_authorization: true
     auth_superuser_name: admin
     auth_certificate_role_queries:
-    - source: ALTNAME
-      query: DNS=([^,\\s]+)
+    - source: SUBJECT
+      query: CN=([a-zA-Z0-9_-]+)
     """
   }
   refdb="global-refdb": scyllaclusters.#ScyllaCluster & {
