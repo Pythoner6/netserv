@@ -49,7 +49,7 @@ kustomizations: $default: manifest: {
     auth_superuser_name: admin
     auth_certificate_role_queries:
     - source: ALTNAME
-      query: DNS=([^,\s]+)
+      query: DNS=([^,\\s]+)
     """
   }
   "global-refdb": scyllaclusters.#ScyllaCluster & {
