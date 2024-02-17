@@ -49,8 +49,8 @@ kustomizations: $default: manifest: {
   broker="events-broker": {
     apiVersion: "kafka.strimzi.io/v1beta2"
     kind: "Kafka"
-    metadata: annotation: "strimzi.io/kraft": "enabled"
-    metadata: annotation: "strimzi.io/node-pools": "enabled"
+    metadata: annotations: "strimzi.io/kraft": "enabled"
+    metadata: annotations: "strimzi.io/node-pools": "enabled"
     spec: {
       entityOperator: {
         userOperator: {}
