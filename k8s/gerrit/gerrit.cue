@@ -42,7 +42,7 @@ kustomizations: $default: manifest: {
       "pod-security.kubernetes.io/warn": "privileged"
     }
   }
-  "scylla-config": corev1.#ConfigMap & {
+  refdbConfig="global-refdb-config": corev1.#ConfigMap & {
     data: "scylla.yaml": """
     alternator_enforce_authorization: true
     """
@@ -59,6 +59,7 @@ kustomizations: $default: manifest: {
         racks: [{
           name: "us-east-1a"
           members: 3
+          scyllaConfig: refdbConfig.metadata.name
           resources: {
             requests: {
               cpu: "1"
