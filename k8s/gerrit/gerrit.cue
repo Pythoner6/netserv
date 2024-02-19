@@ -93,6 +93,7 @@ kustomizations: $default: manifest: {
     apiVersion: "batch/v1"
     kind: "Job"
     spec: template: spec: {
+      restartPolicy: "OnFailure"
       containers: [{
         name: "gerrit-credentials"
         image: "ghcr.io/pythoner6/netserv/gerrit@\(#Images[appName].digest)"
