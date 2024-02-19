@@ -209,6 +209,7 @@ kustomizations: $default: manifest: {
   }
   kafkaUser: kafkausers.#KafkaUser & {
     metadata: name: "gerrit"
+    metadata: labels: "strimzi.io/cluster": broker.metadata.name
     spec: authentication: type: "tls"
   }
 }
