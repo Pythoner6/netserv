@@ -143,9 +143,17 @@
             digest = "a0fab1443750719105fc3fba09862a7a325ca9a6241edfec1f45f29117786066";
           };
         };
+        alternator-credentials = let 
+            craneLib = (crane.mkLib pkgs).overrideToolchain pkgs.rust-bin.stable.latest.default;
+        in craneLib.buildPackage {
+          src = craneLib.cleanCargoSource (craneLib.path ./src/alternator-credentials);
+          nativeBuildInputs = [ pkgs.pkg-config ];
+          buildInputs = [ pkgs.openssl.dev ];
+          strictDeps = true;
+        };
         gerrit-image = oci.fromDockerArchive {
           name = "gerrit-image-oci";
-          src = gerrit.gerrit-image;
+          src = gerrit.gerrit-image alternator-credentials;
         };
       in {
         _module.args.pkgs = import inputs.nixpkgs {
@@ -331,7 +339,8 @@
         };
         devShells = {
           default = pkgs.mkShell {
-            buildInputs = with pkgs; [ pkgs.cue pkgs.timoni postgresql jq nodejs nodePackages.npm typescript kubernetes-helm flux umoci skopeo weave-gitops yq-go go xxd talosctl pkgs.crane openldap operator-sdk jdk19 maven gradle pkgs.cargo pkgs.rustc ];
+          #default = ((crane.mkLib pkgs).overrideToolchain (pkgs.rust-bin.stable.latest.default.override {extensions = ["rust-analyzer"];})).devShell {
+            buildInputs = with pkgs; [ pkgs.cue pkgs.timoni postgresql jq nodejs nodePackages.npm typescript kubernetes-helm flux umoci skopeo weave-gitops yq-go go xxd talosctl pkgs.crane openldap operator-sdk jdk19 maven gradle pkgs.cargo pkgs.rustc gcc pkg-config openssl.dev cassandra ];
           };
           push = pkgs.mkShell {
             buildInputs = [ pkgs.crane ];

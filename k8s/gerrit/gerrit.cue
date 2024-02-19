@@ -9,6 +9,7 @@ import (
   //externalsecrets "external-secrets.io/externalsecret/v1beta1"
   issuers "cert-manager.io/issuer/v1"
   corev1 "k8s.io/api/core/v1"
+  //batchv1 "k8s.io/api/batch/v1"
   //rbacv1 "k8s.io/api/rbac/v1"
 )
 
@@ -84,8 +85,55 @@ kustomizations: $default: manifest: {
       }
     }
   }
-  "global-refdb-ca": issuers.#Issuer & {
+  refdbIssuer="global-refdb-ca": issuers.#Issuer & {
     spec: ca: secretName: "\(refdb.metadata.name)-local-client-ca"
+  }
+  //"global-refdb-gerrit-credentials": batchv1.#Job & {
+  "global-refdb-gerrit-credentials":  {
+    apiVersion: "batch/v1"
+    kind: "Job"
+    spec: template: spec: {
+      containers: [{
+        name: "gerrit-credentials"
+        image: "ghcr.io/pythoner6/netserv/gerrit@\(#Images[appName].digest)"
+        command: [
+          "alternator-credentials", "generate",
+          "--ca", "/certs/ca/tls.crt",
+          "--cert", "/certs/admin/tls.crt",
+          "--key", "/certs/admin/tls.key",
+          "--nodes", "\(refdb.metadata.name)-client.\(appName).svc:9142",
+          "--role", "gerrit",
+        ]
+        volumeMounts: [
+          {
+            mountPath: "/certs/ca/"
+            name: "ca"
+          },
+          {
+            mountPath: "/certs/admin/"
+            name: "admin"
+          },
+        ]
+      }]
+      volumes: [
+        {
+          name: "ca"
+          secret: {
+            items: [{key: "tls.crt", path: "tls.crt"}]
+            secretName: "\(refdb.metadata.name)-local-serving-ca"
+          }
+        },
+        {
+          name: "admin"
+          csi: {
+            driver: "csi.cert-manager.io"
+            readOnly: true
+            "csi.cert-manager.io/issuer-name": refdbIssuer.metadata.name
+            "csi.cert-manager.io/common-name": "admin"
+          }
+        },
+      ]
+    }
   }
   "events-broker-node-pool": kafkanodepools.#KafkaNodePool & {
     metadata: labels: "strimzi.io/cluster": broker.metadata.name

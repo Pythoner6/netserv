@@ -222,7 +222,7 @@ in rec {
         ln -s /var/gerrit/plugins/pull-replication.jar $out/var/gerrit/lib/pull-replication.jar
       '';
     };
-  in pkgs.dockerTools.buildLayeredImage {
+  in alternator-credentials: (pkgs.dockerTools.buildLayeredImage {
     name = "gerrit-image";
     contents = [
       pkgs.bash
@@ -232,6 +232,7 @@ in rec {
       pkgs.coreutils
       pkgs.gnugrep
       pkgs.cgit-pink
+      alternator-credentials
       (pkgs.stdenv.mkDerivation {
         name = "gerrit-image-etc";
         dontUnpack = true;
@@ -271,5 +272,5 @@ in rec {
         '';
       })];
     };
-  };
+  });
 }
