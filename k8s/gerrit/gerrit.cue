@@ -129,8 +129,10 @@ kustomizations: $default: manifest: {
           csi: {
             driver: "csi.cert-manager.io"
             readOnly: true
-            "csi.cert-manager.io/issuer-name": refdbIssuer.metadata.name
-            "csi.cert-manager.io/common-name": "admin"
+            volumeAttributes: {
+              "csi.cert-manager.io/issuer-name": refdbIssuer.metadata.name
+              "csi.cert-manager.io/common-name": "admin"
+            }
           }
         },
       ]
