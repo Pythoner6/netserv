@@ -83,9 +83,9 @@
         };
 
         tekton-operator-manifest = utils.fetchurlHexDigest {
-          # renovate: github-release-attachments package=tektoncd/operator version=v0.69.1
-          url = "https://github.com/tektoncd/operator/releases/download/v0.69.1/release.yaml";
-          digest = "0e591f8680ac72facb83c6c80b04007b54187c59ac5348a951936554b4999f6f";
+          # renovate: github-release-attachments package=tektoncd/operator version=v0.70.0
+          url = "https://github.com/tektoncd/operator/releases/download/v0.70.0/release.yaml";
+          digest = "ee7d9c1681048d265cd83d08225e68963450d061bf4331a936d5b52ceb2ce6d0";
         };
 
         charts = cue.charts {
