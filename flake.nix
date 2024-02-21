@@ -128,9 +128,9 @@
             digest = "c9fd95e3a56241d99f6a27f801488e6d70dfdd9bcd0e49420f28847d9377414d";
           };
           gitlab.src = utils.fetchurlHexDigest {
-            # renovate: helm=https://charts.gitlab.io package=gitlab version=7.9.0
-            url = "https://gitlab-charts.s3.amazonaws.com/gitlab-7.9.0.tgz";
-            digest = "789ec56d929c7ec403fc05249639d0c48ff6ab831f90db7c6ac133534d0aba19";
+            # renovate: helm=https://charts.gitlab.io package=gitlab version=7.9.1
+            url = "https://gitlab-charts.s3.amazonaws.com/gitlab-7.9.1.tgz";
+            digest = "512c0507502cf34e25d3a1416b794ebfd120b2a3b6d348c2132e6d079a24efe2";
           };
           scylla-operator.src = utils.fetchurlHexDigest {
             # renovate: helm=https://storage.googleapis.com/scylla-operator-charts/stable package=scylla version=1.11.2
