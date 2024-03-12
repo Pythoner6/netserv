@@ -138,9 +138,9 @@
             digest = "1e529d5a4e28b22ec49bcb0c05d1034de575b01d582af5caed82136289835470";
           };
           strimzi-kafka-operator.src = utils.fetchurlHexDigest {
-            # renovate: github-release-attachments package=strimzi/strimzi-kafka-operator version=0.39.0
-            url = "https://github.com/strimzi/strimzi-kafka-operator/releases/download/0.39.0/strimzi-kafka-operator-helm-3-chart-0.39.0.tgz";
-            digest = "a0fab1443750719105fc3fba09862a7a325ca9a6241edfec1f45f29117786066";
+            # renovate: github-release-attachments package=strimzi/strimzi-kafka-operator version=0.40.0
+            url = "https://github.com/strimzi/strimzi-kafka-operator/releases/download/0.40.0/strimzi-kafka-operator-helm-3-chart-0.40.0.tgz";
+            digest = "a005735c8b397f92ef6c599023a7ee1f2354eabbd8f0282b192f331f02592cc1";
           };
         };
         alternator-credentials = let 
