@@ -133,9 +133,9 @@
             digest = "24807c8019062642854da1468c7855ba922c22af8856cebcab18814d06cd0f97";
           };
           scylla-operator.src = utils.fetchurlHexDigest {
-            # renovate: helm=https://storage.googleapis.com/scylla-operator-charts/stable package=scylla version=1.11.2
-            url = "https://scylla-operator-charts.storage.googleapis.com/stable/scylla-operator-v1.11.2.tgz";
-            digest = "1e529d5a4e28b22ec49bcb0c05d1034de575b01d582af5caed82136289835470";
+            # renovate: helm=https://storage.googleapis.com/scylla-operator-charts/stable package=scylla version=v1.11.3
+            url = "https://scylla-operator-charts.storage.googleapis.com/stable/scylla-operator-vv1.11.3.tgz";
+            digest = "ce2019236cdd6370968f51807bbe2aa5ebf25ebf94e8b0a0c903f52be07533eb";
           };
           strimzi-kafka-operator.src = utils.fetchurlHexDigest {
             # renovate: github-release-attachments package=strimzi/strimzi-kafka-operator version=0.40.0
